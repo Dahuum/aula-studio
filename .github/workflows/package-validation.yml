@@ -5,7 +5,7 @@ on:
       tag:
         description: Existing release or draft tag
         required: true
-        default: v0.4.3
+        default: v0.5.0
 permissions:
   # GitHub hides unpublished release drafts from a read-only job token.
   # This manual workflow only reads assets; the token never enters containers.

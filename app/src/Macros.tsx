@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { KeyboardEvent } from "react";
-import { CODE_USAGE, KEYBOARD, usageLabel } from "./layout";
+import { KEYBOARD } from "./layout";
+import type { Key } from "./layout";
 import { validateMacro } from "./model";
 import type { Macro } from "./model";
 export function Macros({
@@ -9,16 +10,28 @@ export function Macros({
   onChange,
   onExport,
   onImport,
+  layout = KEYBOARD,
 }: {
   macros: Macro[];
+  layout?: Key[];
   onChange: (value: Macro[]) => void;
   onExport: (name: string, text: string) => void;
   onImport: () => void;
 }) {
+  const codeUsage = Object.fromEntries(
+    layout
+      .filter((k) => k.usage !== undefined && k.code)
+      .map((k) => [k.code, k.usage!]),
+  );
+  const usageLabel = (usage: number) =>
+    layout.find((k) => k.usage === usage)?.label ?? `HID ${usage}`;
   const [selected, setSelected] = useState(macros[0]?.id ?? "");
   const [recording, setRecording] = useState(false);
-  const [listRoot,setListRoot]=useState<HTMLElement|null>(null);
-  useEffect(()=>setListRoot(document.getElementById("original-macro-list")),[]);
+  const [listRoot, setListRoot] = useState<HTMLElement | null>(null);
+  useEffect(
+    () => setListRoot(document.getElementById("original-macro-list")),
+    [],
+  );
   const [playing, setPlaying] = useState(-1);
   const [key, setKey] = useState(4);
   const held = useRef(new Set<number>());
@@ -59,7 +72,7 @@ export function Macros({
       stop();
       return;
     }
-    const usage = CODE_USAGE[e.code];
+    const usage = codeUsage[e.code];
     if (
       usage === undefined ||
       e.repeat ||
@@ -116,43 +129,47 @@ export function Macros({
     onChange([...macros, m]);
     setSelected(m.id);
   };
-  const listPanel=(
-<section className="panel macro-list-panel">
-          <div className="panel-heading">
-            <h2>Your macros</h2>
+  const listPanel = (
+    <section className="panel macro-list-panel">
+      <div className="panel-heading">
+        <h2>Your macros</h2>
+        <button
+          className="small"
+          onClick={add}
+          disabled={macros.length >= 64 || recording || playing >= 0}
+        >
+          + New
+        </button>
+      </div>
+      {macros.length === 0 ? (
+        <div className="empty">
+          <span>⌘</span>
+          <p>Build your first sequence.</p>
+          <button onClick={add}>Create macro</button>
+        </div>
+      ) : (
+        <div className="macro-list">
+          {macros.map((m) => (
             <button
-              className="small"
-              onClick={add}
-              disabled={macros.length >= 64 || recording || playing >= 0}
+              key={m.id}
+              className={selected === m.id ? "active" : ""}
+              disabled={recording || playing >= 0}
+              onClick={() => setSelected(m.id)}
             >
-              + New
+              <span>{m.name}</span>
+              <small>{m.events.length} events</small>
             </button>
-          </div>
-          {macros.length === 0 ? (
-            <div className="empty">
-              <span>⌘</span>
-              <p>Build your first sequence.</p>
-              <button onClick={add}>Create macro</button>
-            </div>
-          ) : (
-            <div className="macro-list">
-              {macros.map((m) => (
-                <button
-                  key={m.id}
-                  className={selected === m.id ? "active" : ""}
-                  disabled={recording || playing >= 0}
-                  onClick={() => setSelected(m.id)}
-                >
-                  <span>{m.name}</span>
-                  <small>{m.events.length} events</small>
-                </button>
-              ))}
-            </div>
-          )}
-          <button className="text-button" disabled={recording || playing >= 0} onClick={onImport}>
-            Import macro JSON
-          </button>
-        </section>
+          ))}
+        </div>
+      )}
+      <button
+        className="text-button"
+        disabled={recording || playing >= 0}
+        onClick={onImport}
+      >
+        Import macro JSON
+      </button>
+    </section>
   );
   return (
     <>
@@ -167,8 +184,8 @@ export function Macros({
           </p>
         </div>
       </div>
-      <div className={`macro-grid ${listRoot?"portaled":""}`}>
-        {listRoot?createPortal(listPanel,listRoot):listPanel}
+      <div className={`macro-grid ${listRoot ? "portaled" : ""}`}>
+        {listRoot ? createPortal(listPanel, listRoot) : listPanel}
         <section className="panel macro-editor">
           {macro ? (
             <>
@@ -199,7 +216,8 @@ export function Macros({
                 onKeyDown={(e) => record(e, "down")}
                 onKeyUp={(e) => record(e, "up")}
                 onBlur={(e) => {
-                  if (recording && !e.currentTarget.contains(e.relatedTarget)) stop();
+                  if (recording && !e.currentTarget.contains(e.relatedTarget))
+                    stop();
                 }}
               >
                 <span
@@ -216,7 +234,12 @@ export function Macros({
                     : "Only keys typed in this focused area are recorded."}
                 </p>
                 <button
-                  disabled={playing >= 0 || (!recording && (!!validateMacro(macro.events) || macro.events.length >= 2048))}
+                  disabled={
+                    playing >= 0 ||
+                    (!recording &&
+                      (!!validateMacro(macro.events) ||
+                        macro.events.length >= 2048))
+                  }
                   onClick={() => {
                     if (recording) {
                       stop();
@@ -238,11 +261,13 @@ export function Macros({
                   value={key}
                   onChange={(e) => setKey(+e.target.value)}
                 >
-                  {KEYBOARD.filter((k) => k.usage !== undefined).map((k) => (
-                    <option key={k.id} value={k.usage}>
-                      {k.label} ({k.code})
-                    </option>
-                  ))}
+                  {layout
+                    .filter((k) => k.usage !== undefined)
+                    .map((k) => (
+                      <option key={k.id} value={k.usage}>
+                        {k.label} ({k.code})
+                      </option>
+                    ))}
                 </select>
                 <button
                   disabled={
@@ -349,7 +374,12 @@ export function Macros({
               )}
               <div className="toolbar end">
                 <button
-                  disabled={recording || playing >= 0 || !!validateMacro(macro.events) || !macro.name.trim()}
+                  disabled={
+                    recording ||
+                    playing >= 0 ||
+                    !!validateMacro(macro.events) ||
+                    !macro.name.trim()
+                  }
                   onClick={() =>
                     onExport(
                       macro.name,

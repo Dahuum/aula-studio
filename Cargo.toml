@@ -1,9 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["crates/aula-protocol", "crates/aula-hid", "crates/aula-service", "crates/aula-cli", "app/src-tauri"]
+members = ["crates/aula-protocol", "crates/aula-models", "crates/aula-hid", "crates/aula-service", "crates/aula-cli", "app/src-tauri"]
 
 [workspace.package]
-version = "0.4.3"
+version = "0.5.0"
 edition = "2021"
 license = "MIT"
 rust-version = "1.85"

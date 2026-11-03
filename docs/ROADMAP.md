@@ -7,3 +7,11 @@
 5. Establish receiver framing/state and revision checks; never infer wireless settings from wired success.
 6. Establish debounce/OS/polling/firmware query semantics before exposing controls.
 7. Expand native automation, accessibility/file-dialog UX, log presentation/rotation, faithful effects and packaging CI.
+
+## Model expansion priorities after0.5
+
+1. Reconcile exact revisions/identity and obtain consenting owners' descriptors/bounded read traces for F87/F108/H108/S75 families.
+2. Verify S75 stored color channels, selector/commit response semantics and04F5 nine-page backup versus eight-page color writes; finish safe identity/read/restore specification before enabling transport.
+3. Resolve S99 conflicting indices and F98 physical geometry, then implement adapters independently of F75.
+4. Decode native macro action/timing/binding/slot limits and independently cross-check Hub SDK semantics; keep onboard upload disabled until complete and hardware-tested.
+5. Complete F2088 extraction, per-package native call-graph analysis, mouse adapters, and then exact-device validation. Do not treat acquired files or local editors as shipped hardware support.

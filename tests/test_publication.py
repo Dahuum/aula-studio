@@ -23,13 +23,13 @@ class PublicationTests(unittest.TestCase):
         for name in ['analysis/extracted/app/OemDrv.exe', 'original/installer-manifest.md', 'AULA F75.exe',
                      'docs/CONTINUATION.md', 'docs/PROGRESS.md', 'docs/FINAL_REPORT.md',
                      'app/node_modules/example/index.js', 'app/dist/index.html', 'site/dist/index.html',
-                     'site/fonts/unreviewed.woff2', 'site/fonts/private.env', '../secret.rs', '/tmp/secret.rs', 'fixtures/raw-device.bin', 'publication/account.json']:
+                     'site/fonts/unreviewed.woff2', 'site/fonts/private.env', '../secret.rs', '/tmp/secret.rs', 'fixtures/raw-device.bin', 'publication/account.json', 'data/raw-backup.json', 'data/DeviceDriver.exe', 'data/private.json']:
             self.assertFalse(exporter.allowed(name), name)
     def test_buildable_source_and_attribution_are_retained(self):
         for name in ['Cargo.lock', 'README.md', 'LICENSE', 'crates/aula-protocol/src/lib.rs',
                      'app/src-tauri/src/startup.rs', 'app/package-lock.json', 'fixtures/keymap/LICENSE',
                      'fixtures/keymap/f87-factory-base.bin', 'site/index.html', 'site/fonts/instrument-sans.woff2', 'site/fonts/ibm-plex-mono.woff2',
-                     'site/fonts/OFL-instrument-sans.txt', 'site/fonts/OFL-ibm-plex-mono.txt', 'site/fonts/sources.json', 'third_party/licenses/index.json']:
+                     'site/fonts/OFL-instrument-sans.txt', 'site/fonts/OFL-ibm-plex-mono.txt', 'site/fonts/sources.json', 'third_party/licenses/index.json', 'data/models.json', 'data/download-catalog.json', 'docs/MODEL_WORKSPACES.md', 'docs/MULTI_MODEL_RESEARCH.md', 'crates/aula-models/src/lib.rs']:
             self.assertTrue(exporter.allowed(name), name)
     def test_likely_credentials_stop_export(self):
         with self.assertRaises(ValueError):

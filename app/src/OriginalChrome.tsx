@@ -64,7 +64,7 @@ export function OriginalNavigation({page,effect,assets,onNavigate,onEffect,demo,
         </button>;
       })}</nav>
       <button className="original-more" title="Linux tools" aria-label="More views" aria-expanded={more} onClick={()=>setMore(!more)}><UiIcon kind="more"/></button>
-      {more&&<div className="original-extra-views">{["Diagnostics","About"].map(p=><button key={p} onClick={()=>{onNavigate(p);setMore(false);}}>{p}</button>)}</div>}
+      {more&&<div className="original-extra-views">{["Models","Diagnostics","About"].map(p=><button key={p} aria-label={p==="Models"?"Device library":p} onClick={()=>{onNavigate(p);setMore(false);}}>{p==="Models"?"Device library":p}</button>)}</div>}
     </aside>
     <section className="original-context" inert={inert} aria-label="Section options">
       <h2>{lighting?"Light effect":mapping?"Key setting":page==="Macros"?"Macro":page==="Profiles"?"Config":page==="Device Settings"?"Global":page}<span aria-hidden="true">»</span></h2>

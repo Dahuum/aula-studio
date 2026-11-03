@@ -19,3 +19,7 @@ The user explicitly authorized the backed-up one-step brightness/readback/restor
 ## ANSI bottom-row correction
 
 Do not use0.1–0.3 mapping/per-key binaries. The supplied French package uses RightAlt53/Fn59, while the saved local ANSI base read identifies Fn53 with record0D000000 and RightCtrl59 with record00100000. Corrected source protects Fn53 and maps physical RightCtrl usage228 to59. Physical mapping/per-key reads and commits now verify the base Fn marker and reject mismatched regional/revision layouts before mutation. Original bank reads remain evidence of bytes, not a validation of the earlier incorrect role labels. No mapping/per-key write was performed during development. The later authorized brightness6→5→6 test passed with exact all-bank restoration; see TESTING.md.
+
+## Additional models
+
+Model library discovery is metadata-only and retains ambiguous USB candidates. Native F75 configuration operations verify its exact six-byte identity under the same descriptor/connection lock. The diagnostic identity command is limited to a statically established bounded G5 read; it is not arbitrary probing. All additional model editors save a separate incompatible local profile format. Offline S75 encoders have no transport. No new model inherits HID writes from a USB match, and no new-model udev permissions are installed.

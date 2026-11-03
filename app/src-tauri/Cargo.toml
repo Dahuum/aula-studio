@@ -9,6 +9,7 @@ build = "build.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+aula-models = { path = "../../crates/aula-models" }
 base64 = "0.23"
 tauri = { version = "2", features = [] }
 serde.workspace = true

@@ -1,0 +1,468 @@
+{
+  "schema_version": 1,
+  "source": {
+    "url": "https://www.aulagaming.com/pages/download",
+    "html_sha256": "fa39a4e15a0a6a73ef15c2eb5f240c6a873e068ac70659d4996d02720433e31e",
+    "captured_at_utc": "2026-11-03T11:09:58.865130+00:00"
+  },
+  "scope": "Direct Windows driver packages linked by the supplied official catalog; browser configurators, hosted landing pages and standalone firmware excluded. This is acquisition metadata, not a compatibility claim.",
+  "counts": {
+    "catalog_entries": 31,
+    "acquired_direct_packages": 12,
+    "direct_keyboard_packages": 8,
+    "direct_mouse_packages": 3,
+    "direct_hub_packages": 1,
+    "by_classification": {
+      "eligible_direct_windows_package": 12,
+      "excluded_browser_configurator": 11,
+      "excluded_hosted_landing_page": 6,
+      "excluded_firmware_only": 2
+    }
+  },
+  "entries": [
+    {
+      "id": "aula-hub-driver",
+      "name": "AULA Hub Driver",
+      "device_category": "software",
+      "source_role": "driver",
+      "download_url": "https://www.aulastar.com/AULA%20HUB.zip",
+      "product_url": null,
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA HUB.zip",
+        "bytes": 150455271,
+        "sha256": "f18f4bfa2a6d66f24bed8d2c17b61eff8530ebc9ad0615344f72003f5bf9db08",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "ag60-web-driver",
+      "name": "AG60 Web Driver",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://hub.aulacn.com/",
+      "product_url": "https://www.aulagaming.com/products/aula-ag60-shock-absorbing-aluminum-keyboard",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "ag75-web-driver",
+      "name": "AG75 Web Driver",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://hub.aulacn.com/",
+      "product_url": "https://www.aulagaming.com/products/aula-ag75",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "neos-75",
+      "name": "NEOS 75",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://www.aulastar.com/aula-hub/",
+      "product_url": "https://www.aulagaming.com/products/aula-neos75-full-aluminum-low-profile-mechanical-keyboard",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "hero75he-web-driver",
+      "name": "HERO75HE Web Driver",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://www.aulastar.com/aula-hub/",
+      "product_url": "https://www.aulagaming.com/products/aula-hero-75-he-tri-mode-magnetic-keyboard",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "s99-pro",
+      "name": "S99 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_S99_PRO_Driver.exe?v=1791883907",
+      "product_url": "https://www.aulagaming.com/products/aula-s99-pro-tri-mode-connection-membrane-gaming-keyboard",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_S99_PRO_Driver.exe",
+        "bytes": 15839784,
+        "sha256": "117d7cbded86c0ba63e190a1aee38c6ab9bb63aa5aba65a5cbc8f3269ffaf5c6",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "f75-pro",
+      "name": "F75 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://www.mediafire.com/file/5whrw6wr1bdpst0/AULA+F75+Setup+v2.0+20260514.exe/file",
+      "product_url": "https://www.aulagaming.com/products/aula-f75-pro",
+      "classification": "excluded_hosted_landing_page",
+      "acquisition_status": "excluded",
+      "reason": "Hosted file-service landing page, not a direct artifact URL. Not acquired; no landing-page scraping or bypass.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "mini-60he",
+      "name": "MINI 60HE",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://www.aulastar.com/aula-hub/",
+      "product_url": "https://www.aulagaming.com/products/aula-mini-60he-magnetic-switch-keyboard",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "f75he",
+      "name": "F75HE",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://www.aulastar.com/aula-hub/",
+      "product_url": "https://www.aulagaming.com/products/aula-f75-he-hall-effect-wireless-gaming-keyboard",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "f87-f87-pro",
+      "name": "F87/F87 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F87_Software.exe?v=1756176168",
+      "product_url": "https://www.aulagaming.com/products/aula-f87",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_F87_Software.exe",
+        "bytes": 3395537,
+        "sha256": "a91db0e84dd6e677aaa1701a6c4851e71131b561815909aacfc6f8679d20fdee",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "f99",
+      "name": "F99",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://www.mediafire.com/file/qayztlag770zpqg/AULA+F99+Setup+v2.0+20260514.exe/file",
+      "product_url": "https://www.aulagaming.com/products/aula-f99",
+      "classification": "excluded_hosted_landing_page",
+      "acquisition_status": "excluded",
+      "reason": "Hosted file-service landing page, not a direct artifact URL. Not acquired; no landing-page scraping or bypass.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "f99-f99-pro",
+      "name": "F99/F99 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://www.mediafire.com/file/qayztlag770zpqg/AULA+F99+Setup+v2.0+20260514.exe/file",
+      "product_url": "https://www.aulagaming.com/products/aula-f99-pro",
+      "classification": "excluded_hosted_landing_page",
+      "acquisition_status": "excluded",
+      "reason": "Hosted file-service landing page, not a direct artifact URL. Not acquired; no landing-page scraping or bypass.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "s75-pro",
+      "name": "S75 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_S75_Pro_Software.exe?v=1756176170",
+      "product_url": "https://www.aulagaming.com/products/aula-s75-pro",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_S75_Pro_Software.exe",
+        "bytes": 8472376,
+        "sha256": "b097008ff9aa4497ca36660e5c61574aca2847500c4263637d236cd92220686b",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "s98-pro",
+      "name": "S98 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://www.mediafire.com/file_premium/uvvgwhufd9le821/AULA_S98Pro_softwaredriver.exe/file",
+      "product_url": "https://www.aulagaming.com/products/aula-s98-pro-wireless-mechanical-keyboard",
+      "classification": "excluded_hosted_landing_page",
+      "acquisition_status": "excluded",
+      "reason": "Hosted file-service landing page, not a direct artifact URL. Not acquired; no landing-page scraping or bypass.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "l99",
+      "name": "L99",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://www.mediafire.com/file_premium/w97f57zhqp4pn8o/AULA_L99-EN_Driver-1.0.1.4.exe/file",
+      "product_url": "https://www.aulagaming.com/products/aula-l99-smart-screen-mechanical-keyboard",
+      "classification": "excluded_hosted_landing_page",
+      "acquisition_status": "excluded",
+      "reason": "Hosted file-service landing page, not a direct artifact URL. Not acquired; no landing-page scraping or bypass.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "f108",
+      "name": "F108",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F108_Software.exe?v=1756176166",
+      "product_url": null,
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_F108_Software.exe",
+        "bytes": 2271344,
+        "sha256": "423f3bab5b10daae865d69c95d58f7a8127f47360163a370fc966574631787aa",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "f108-pro",
+      "name": "F108 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F108Pro_Software.exe?v=1756176171",
+      "product_url": "https://www.aulagaming.com/products/aula-f108-pro",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_F108Pro_Software.exe",
+        "bytes": 10759872,
+        "sha256": "566b634be9f065717164a76fd0bed24c8175fa587c350599a44648ad226ad36a",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "f2088",
+      "name": "F2088",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F2088_Driver_setup_v1.0.5.7_1_1.exe?v=1762134219",
+      "product_url": "https://www.aulagaming.com/products/aula-f2088",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_F2088_Driver_setup_v1.0.5.7_1_1.exe",
+        "bytes": 10074083,
+        "sha256": "8731252ed943e177d659558aef0f0a091a1f630f474abfb35da9459b5b0ed3ee",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "win60he-web-driver",
+      "name": "WIN60HE Web Driver",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://www.aulastar.com/aula-hub/",
+      "product_url": "https://www.aulagaming.com/products/aula-win60-he",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "win60he-pro-firmware",
+      "name": "Win60HE Pro Firmware",
+      "device_category": "keyboard",
+      "source_role": "firmware",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/WIN60_HE_PRO_V1.1.1.exe?v=1793252507",
+      "product_url": null,
+      "classification": "excluded_firmware_only",
+      "acquisition_status": "excluded",
+      "reason": "Firmware-only package; outside the requested configuration-software scope. Not downloaded.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "win68he-web-driver",
+      "name": "WIN68HE Web Driver",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://www.aulastar.com/aula-hub/",
+      "product_url": "https://www.aulagaming.com/products/aula-win68-he",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "hero68he",
+      "name": "HERO68HE",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://hero.aulastar.com",
+      "product_url": "https://www.aulagaming.com/products/aula-hero-68-he",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "hero-84he",
+      "name": "HERO 84HE",
+      "device_category": "keyboard",
+      "source_role": "web_driver",
+      "download_url": "https://hero.aulastar.com/",
+      "product_url": "https://www.aulagaming.com/products/aula-hero84-he",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "h108",
+      "name": "H108",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_H108_Setup_v2.0_20251022_1.exe?v=1771334790",
+      "product_url": "https://www.aulagaming.com/products/aula-h108-lumiotune-full-size-keyboard",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_H108_Setup_v2.0_20251022_1.exe",
+        "bytes": 2411590,
+        "sha256": "7d0367b01e40cd8fc101a66699cf9acb42cd5fdba04a2e2623d2ecbf283584c9",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "f98-pro",
+      "name": "F98 Pro",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F98Pro_Software.exe?v=1756176508",
+      "product_url": "https://www.aulagaming.com/products/aula-f98-pro",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_F98Pro_Software.exe",
+        "bytes": 6776456,
+        "sha256": "d75ffce415aa10f291c7d26afb55e17f6a0308795b27efdabee6a38e510d5935",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "f98x",
+      "name": "F98X",
+      "device_category": "keyboard",
+      "source_role": "driver",
+      "download_url": "https://www.mediafire.com/file_premium/u2fzfclkyhwv9bo/AULA__F98X__RGB%25E5%258F%2591%25E5%2585%2589_%25E4%25B8%2589%25E6%25A8%25A1%25E6%259C%25BA%25E6%25A2%25B0%25E9%2594%25AE%25E7%259B%2598_Driver-1.0.0.5%25281%2529.exe/file",
+      "product_url": "https://www.aulagaming.com/products/aula-f98x-magnetic-gaming-keyboard",
+      "classification": "excluded_hosted_landing_page",
+      "acquisition_status": "excluded",
+      "reason": "Hosted file-service landing page, not a direct artifact URL. Not acquired; no landing-page scraping or bypass.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "f98-pro-v3-firmware",
+      "name": "F98 pro v3 Firmware",
+      "device_category": "keyboard",
+      "source_role": "firmware",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/F98PRO_V3__SI-2838_10000mAh___RGB_1.14_HFD80CP100_V1.29_20260402__0x4172.exe?v=1778760849",
+      "product_url": null,
+      "classification": "excluded_firmware_only",
+      "acquisition_status": "excluded",
+      "reason": "Firmware-only package; outside the requested configuration-software scope. Not downloaded.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    },
+    {
+      "id": "sc620",
+      "name": "SC620",
+      "device_category": "mouse",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_SC620-V1.2.2.exe?v=1785234034",
+      "product_url": "https://www.aulagaming.com/products/aula-sc620-tri-mode-wireless-gaming-mouse",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_SC620-V1.2.2.exe",
+        "bytes": 5064144,
+        "sha256": "8c2537d687360a2922ec2b11e1710ba6b2612c8d8a3d4d60966fcad39cee9263",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "sc580-580-x",
+      "name": "SC580/580 X",
+      "device_category": "mouse",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_SC580_Software.exe?v=1756176167",
+      "product_url": "https://www.aulagaming.com/products/aula-sc580x",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_SC580_Software.exe",
+        "bytes": 2697653,
+        "sha256": "a246a196be023714436d08430e337c03bf36f6c43d65838ae6819d2ab16c5b99",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "s12-pro",
+      "name": "S12 Pro",
+      "device_category": "mouse",
+      "source_role": "driver",
+      "download_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_S12PRO.exe?v=1762306665",
+      "product_url": "https://www.aulagaming.com/products/aula-s12pro",
+      "classification": "eligible_direct_windows_package",
+      "acquisition_status": "acquired",
+      "reason": "Direct Windows configuration-software package; downloaded and hashed without execution.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation",
+      "artifact": {
+        "source_filename": "AULA_S12PRO.exe",
+        "bytes": 5592630,
+        "sha256": "2693eab2ec85723185f34c1be86dbd9b140fcf30876caee8c3bfda2e4c886fb0",
+        "windows_code_executed": false
+      }
+    },
+    {
+      "id": "g7-pro",
+      "name": "G7 Pro",
+      "device_category": "other",
+      "source_role": "web_driver",
+      "download_url": "https://hub.aulacn.com/home",
+      "product_url": "https://www.aulagaming.com/products/aula-g7-pro-wireless-gaming-headset",
+      "classification": "excluded_browser_configurator",
+      "acquisition_status": "excluded",
+      "reason": "Browser-hosted configurator; user requested direct Windows downloads only. Not acquired.",
+      "hardware_support_status": "UNKNOWN; catalog acquisition is not device validation"
+    }
+  ]
+}

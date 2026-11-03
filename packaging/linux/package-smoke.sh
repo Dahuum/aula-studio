@@ -28,7 +28,7 @@ python3 - <<'PY'
 import json
 v=json.load(open('/tmp/diagnostics.json'))
 assert v['hardware_writes_enabled'] is False
-assert v['version']=='0.4.3'
+assert v['version']=='0.5.0'
 PY
 # This container has no USB devices, host display/home mounts or external page.
 # WebKit's extra namespace sandbox cannot start under standard Docker seccomp;

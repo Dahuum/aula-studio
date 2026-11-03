@@ -17,3 +17,9 @@ Matrix reads and mutations first verify the fresh base bank has the observed ANS
 
 
 Linux startup preflight (startup.rs) runs before store initialization/background work. It keeps explicit display settings, can recover a unique current-user Wayland session for TTY launch without DISPLAY/WAYLAND_DISPLAY, and fails safely on ambiguous/untrusted runtime directories. It modifies only the app process environment, initializes GTK once on the main thread and reports actionable errors before Tao constructs its event loop. No shell/compositor configuration is written. Unit planning tests avoid global environment mutation; native child-process tests cover actual successful windows and clean failures.
+
+## Model library and identity boundary —0.5
+
+`aula-models` embeds a validated factual registry from `data/models.json`. It has no HID dependency or handles. It supplies typed model-specific local drafts, an incompatible profile schema/namespace, bounded validation and atomic history-backed storage. The native Device library calls these local services; it never calls legacy F75 prepare/commit commands. The macro editor accepts the selected layout rather than assuming F75 keys. Browser preview has an equivalent explicitly offline namespace.
+
+The IO-free G5 identity codec encodes only the bounded six-byte read. The HID layer uses it after descriptor/connection checks and under the existing operation lock; configuration callbacks run only when identity matches original F75. The timeout includes identity verification. USB metadata discovery keeps multiple model candidates and never chooses from a shared VID/PID. S75 offline framing/scalar/per-key codecs have no transport and cannot establish F108 Pro compatibility.

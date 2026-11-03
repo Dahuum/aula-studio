@@ -1,4 +1,4 @@
-# Feature compatibility — 0.4.2
+# Feature compatibility — 0.5.0
 
 A physical read does not validate a write. All write paths below require explicit GUI review/commit, backups and exact readback. Normal startup and standard tests never apply configuration. The completed, separately authorized two-action brightness test is documented in TESTING.md.
 
@@ -31,3 +31,17 @@ A physical read does not validate a write. All write paths below require explici
 | Firmware/reset operations | UNSUPPORTED by design |No such operation exposed |
 
 Theme switching has user-reported physical confirmation. Brightness-only6→5→6 has agent-run physical readback and exact all-bank restoration. Other write operations, exhaustive effect/control behavior, power-cycle persistence and restore results remain **BLOCKED ON HARDWARE VALIDATION**. Agent-run native tests remain separate from this user observation.
+
+## Additional models
+
+| Feature | Status | Scope |
+| --- | --- | --- |
+| Official catalog acquisition/classification | IMPLEMENTED / OFFLINE TESTED |31 entries,12 direct Windows packages, hashes/source URLs retained; no execution |
+| Model registry/local workspaces | IMPLEMENTED / OFFLINE TESTED |14 entries;9 new resource-derived keyboard variant editors; see [workspace table](MODEL_WORKSPACES.md) |
+| New-model profile/history/import/export | IMPLEMENTED / OFFLINE TESTED |Separate model-bound schema/namespace; never imported into F75 hardware flows |
+| New-model RGB/remap/Fn intent and macros | IMPLEMENTED / OFFLINE TESTED |Local drafts only; capability/resource bounds, larger layouts/numpad recording |
+| Exact F75 model identity read | VERIFIED ON HARDWARE |Read0300000000cd; guard rejects foreign shared-ID models |
+| S75 report/scalar/per-key codecs | IMPLEMENTED / OFFLINE TESTED |Pure offline65B/64B framing; no physical transport or channel-order assumption |
+| F87/S75/Hub native/static protocol research | INVESTIGATED / NOT IMPLEMENTED for hardware configuration |[Evidence](MULTI_MODEL_RESEARCH.md), unresolved operations remain unavailable |
+| New model physical configuration | BLOCKED ON HARDWARE VALIDATION |Identity/backup/revision/semantic gaps must also be resolved; no enabled writes |
+| F2088 and mouse controllers | INVESTIGATED / NOT IMPLEMENTED |Research metadata only, no recovered controller/layout |

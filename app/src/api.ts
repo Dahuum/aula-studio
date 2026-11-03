@@ -1,6 +1,8 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { createProfile, parseProfile } from "./model";
 import type { Profile, Status, Preferences, Backup } from "./model";
+import { modelRegistry, newModelDraft, parseModelDraft } from "./modelLibrary";
+import type { ModelDraft } from "./modelLibrary";
 export const native = isTauri();
 const prefix = "aula-studio-preview-";
 const read = <T>(key: string, fallback: T): T => {
@@ -25,6 +27,67 @@ async function preview<T>(
   });
   let result: unknown;
   switch (command) {
+    case "list_models":
+      result = modelRegistry;
+      break;
+    case "model_devices":
+      result = [];
+      break;
+    case "new_model_profile":
+      result = newModelDraft(String(args.modelId), String(args.name));
+      break;
+    case "list_model_profiles":
+      result = read<ModelDraft[]>("model-profiles", []).map((p) =>
+        parseModelDraft(JSON.stringify(p)),
+      );
+      break;
+    case "model_profile_json":
+      result = JSON.stringify(
+        parseModelDraft(JSON.stringify(args.profile)),
+        null,
+        2,
+      );
+      break;
+    case "save_model_profile": {
+      const p = parseModelDraft(JSON.stringify(args.profile));
+      const all = read<ModelDraft[]>("model-profiles", []),
+        old = all.find((v) => v.id === p.id);
+      if (old && old.model_id !== p.model_id)
+        throw new Error("Cannot overwrite another model's profile");
+      if (old)
+        write("model-history", [
+          ...read<ModelDraft[]>("model-history", []),
+          old,
+        ]);
+      write("model-profiles", [...all.filter((v) => v.id !== p.id), p]);
+      break;
+    }
+    case "delete_model_profile": {
+      const all = read<ModelDraft[]>("model-profiles", []),
+        old = all.find((v) => v.id === args.id);
+      if (!old) throw new Error("Unknown model profile");
+      write("model-history", [...read<ModelDraft[]>("model-history", []), old]);
+      write(
+        "model-profiles",
+        all.filter((v) => v.id !== args.id),
+      );
+      break;
+    }
+    case "import_model_profile": {
+      const p = parseModelDraft(String(args.json));
+      p.id = crypto.randomUUID();
+      write("model-profiles", [...read<ModelDraft[]>("model-profiles", []), p]);
+      result = p;
+      break;
+    }
+    case "export_model_profile": {
+      const p = read<ModelDraft[]>("model-profiles", []).find(
+        (v) => v.id === args.id,
+      );
+      if (!p) throw new Error("Unknown model profile");
+      result = JSON.stringify(parseModelDraft(JSON.stringify(p)), null, 2);
+      break;
+    }
     case "get_status":
       result = {
         mode: prefs.demo_mode ? "demo" : "hardware",

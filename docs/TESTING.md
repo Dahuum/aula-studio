@@ -1,4 +1,24 @@
-# Validation through0.4.2,2026-11-02
+# Validation —0.5.0,2026-11-03
+
+## Multi-model implementation
+
+- 111 Rust tests pass:48 HID,14 models/codecs,28 protocol,12 service,9 native backend. Strict Clippy and rustfmt pass.
+- 44 frontend tests pass, including model layouts, selected-model click regression, separate profile storage, colors/assignments, protected controls, cross-model import selection and numpad macro recording/wrapper import. TypeScript/Vite production build passes.
+- 12 Python acquisition/publication safety tests pass; only the exact two public factual data JSON files are allowlisted. Raw model configs/backups and proprietary installers/binaries stay excluded.
+- Native WebKit/Tauri Device library test passes with real Rust profile storage: all9 new layouts, research-only control suppression, save/clean state, local per-key/Fn data, focused macro recording, export/import/delete/history, malformed import/legacy-namespace rejection,0600 files and return to F75. No mocked IPC. AULA_DISABLE_HARDWARE_WRITES=1; no physical journal/backup created.
+- The native model test found/fixed clicking the already selected model clearing its editor, and legacy global CSS overlaying the new flex workspace. Browser tests alone did not establish native rendering correctness. Workspace bounds are now asserted in native QA.
+- Existing F75 native demo workflow and8 startup/Wayland/TTY cases pass. These are software/window checks, not additional hardware writes.
+- REA/Ghidra F87/S75 sessions and bounded Hub-core static analysis exported their evidence and closed; Windows code/JavaScript bootstrap were never executed.
+- One permitted physical bounded G5 identity read returned0300000000cd on the wired original F75. It does not validate other devices, settings, new-model writes or persistence. No configuration writes were performed in this expansion.
+
+Private detailed logs: analysis/multi-model-research/{rust-tests,frontend-tests,python-tests,native-model,native-f75,native-startup}.log. Reproduce the native workflow with `python3 scripts/native-model-smoke.py --fallback --binary target/release/aula-studio`; requires WebKitWebDriver/Xvfb. Native screenshots are captured from the actual app, never invented. Older read/write evidence below remains separate and is not repeated by standard tests.
+
+The0.5 release binary was also built offline against Debian12/glibc2.36 and passed native F75 GUI/demo and all8 startup/Wayland/TTY checks on Arch. Its Device library workflow passed with an isolated session bus. An earlier simultaneous GUI run lost the WebDriver session during its final screenshot; that interrupted run is retained and not counted as a pass. No production display/sandbox settings were changed.
+
+GUI SHA256: `772a98b8a3c6bcacf788705be847c03d3af59623304f8a030ada7ec9cf63539a`. CLI SHA256: `2bfdc3711b44ed18f8b6918ed36df7edcaec14e5b7297cc531b1428450450233`. Portable/Debian/RPM/Arch payloads use these exact binaries. Static readelf validation rejects a package build requiring glibc newer than2.36. Arch package publication omits host-wide .BUILDINFO inventory and its mtree entry while verifying all retained file hashes.
+
+## Earlier release validation
+
 
 ##0.4 baseline passing automated checks
 

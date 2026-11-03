@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { call, native } from "./api";
 import { Keyboard } from "./Keyboard";
 import { Macros } from "./Macros";
+import { ModelWorkbench } from "./ModelWorkbench";
 import { OriginalNavigation, OriginalTop, UiIcon, useOriginalFrame } from "./OriginalChrome";
 import { OriginalColors } from "./OriginalColors";
 import { KEYBOARD } from "./layout";
@@ -314,6 +315,7 @@ export default function App() {
         );
       }
     });
+  if(page==="Models")return <ModelWorkbench onBack={()=>navigate("Lighting")}/>;
   return (
     <div data-page={page} className={`app original-app ${preferences.reduce_motion ? "reduce-motion" : ""}`} style={originalFrame.style}>
       <div inert={!!modal || !!preparedLighting}><OriginalTop assets={originalFrame.assets} dirty={dirty} busy={busy} mode={status?.mode??"hardware"} connected={!!status?.connected} onNavigate={navigate} onClose={()=>{if(!busy&&(!dirty||window.confirm("Discard unsaved changes and close?")))void call("window_action",{action:"close"}).catch(e=>setError(String(e)));}}/></div>

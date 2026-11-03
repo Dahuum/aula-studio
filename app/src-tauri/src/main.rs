@@ -63,6 +63,53 @@ fn get_status(s: State<AppState>) -> Result<Value> {
         json!({"mode":if demo{"demo"}else{"hardware"},"connected":if demo{true}else{connected},"devices":devices,"capabilities":{"read_config":demo||readable,"write_lighting":demo||readable,"write_per_key":demo||readable,"write_keymap":demo||readable,"write_fn":demo||readable,"onboard_macros":false},"notice":if demo{"Demo mode: Apply changes only the in-memory simulation."}else{"Wired lighting changes require a backup and explicit review. A scoped brightness change/readback/restoration passed on wired ANSI F75; other writes and persistence require validation. Per-key and layer changes have separate scoped reviews. Onboard macros remain local."}}),
     )
 }
+fn model_store(s: &State<AppState>) -> Result<aula_models::Store> {
+    Ok(aula_models::Store::new(
+        s.store.lock().map_err(|e| e.to_string())?.root(),
+    ))
+}
+#[tauri::command]
+fn list_models() -> Result<Vec<aula_models::Model>> {
+    Ok(aula_models::registry()?.to_vec())
+}
+#[tauri::command]
+fn model_devices() -> Result<Value> {
+    Ok(json!(
+        aula_hid::discover_catalog_devices().map_err(|e| e.to_string())?
+    ))
+}
+#[tauri::command]
+fn new_model_profile(model_id: String, name: String) -> Result<aula_models::Draft> {
+    aula_models::Draft::new(&model_id, &name)
+}
+#[tauri::command]
+fn list_model_profiles(s: State<AppState>) -> Result<Vec<aula_models::Draft>> {
+    model_store(&s)?.list()
+}
+#[tauri::command]
+fn save_model_profile(profile: aula_models::Draft, s: State<AppState>) -> Result<()> {
+    model_store(&s)?.save(&profile)
+}
+#[tauri::command]
+fn delete_model_profile(id: String, s: State<AppState>) -> Result<()> {
+    model_store(&s)?.delete(&id)
+}
+#[tauri::command]
+fn import_model_profile(json: String, s: State<AppState>) -> Result<aula_models::Draft> {
+    model_store(&s)?.import(&json)
+}
+#[tauri::command]
+fn model_profile_json(profile: aula_models::Draft) -> Result<String> {
+    profile.validate()?;
+    let text = serde_json::to_string_pretty(&profile).map_err(|e| e.to_string())?;
+    aula_models::decode_draft(&text)?;
+    Ok(text)
+}
+#[tauri::command]
+fn export_model_profile(id: String, s: State<AppState>) -> Result<String> {
+    serde_json::to_string_pretty(&model_store(&s)?.get(&id)?).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn list_profiles(s: State<AppState>) -> Result<Vec<Profile>> {
     s.store.lock().map_err(|e| e.to_string())?.list()
@@ -478,6 +525,15 @@ fn main() {
             save_preferences,
             set_demo_mode,
             get_status,
+            list_models,
+            model_devices,
+            new_model_profile,
+            list_model_profiles,
+            save_model_profile,
+            delete_model_profile,
+            import_model_profile,
+            export_model_profile,
+            model_profile_json,
             list_profiles,
             save_profile,
             delete_profile,

@@ -84,7 +84,7 @@ pub fn discover() -> Result<Vec<DeviceSummary>> {
         let supported =
             wired && info.interface_number() == 1 && feature_report_bytes == Some(REPORT_SIZE);
         let reason = if supported {
-            "Descriptor matches wired report 06; bounded reads and reviewed lighting transactions available. Scoped brightness change/readback/restoration tested on wired ANSI F75; other operations and revisions require validation."
+            "G5 family descriptor matches report06, shared by several AULA models. Exact original-F75 identity is checked before bounded configuration reads or reviewed writes; a USB ID alone is not model identification."
         } else if !wired {
             "Receiver detected. Wireless configuration framing has not been verified for this hardware."
         } else {
@@ -319,6 +319,10 @@ struct HidTransport {
     deadline: Instant,
 }
 impl HidTransport {
+    fn read_model_identity(&mut self) -> Result<[u8; 6]> {
+        let reply = self.read_report(&aula_models::g5::identity_request())?;
+        Ok(aula_models::g5::decode_identity(&reply)?)
+    }
     fn check_deadline(&self) -> Result<()> {
         if Instant::now() >= self.deadline {
             Err(HidError::Timeout)
@@ -529,6 +533,13 @@ fn run_device<T: Send + 'static>(
     selected: DeviceSummary,
     operation: impl FnOnce(&mut HidTransport) -> Result<T> + Send + 'static,
 ) -> Result<T> {
+    run_device_checked(selected, true, operation)
+}
+fn run_device_checked<T: Send + 'static>(
+    selected: DeviceSummary,
+    require_original_f75: bool,
+    operation: impl FnOnce(&mut HidTransport) -> Result<T> + Send + 'static,
+) -> Result<T> {
     let (tx, rx) = mpsc::channel();
     let deadline = Instant::now() + Duration::from_secs(5);
     std::thread::spawn(move || {
@@ -556,7 +567,11 @@ fn run_device<T: Send + 'static>(
             let device = info
                 .open_device(&api)
                 .map_err(|e| HidError::Device(e.to_string()))?;
-            operation(&mut HidTransport { device, deadline })
+            let mut transport = HidTransport { device, deadline };
+            if require_original_f75 {
+                require_f75_identity(transport.read_model_identity()?)?;
+            }
+            operation(&mut transport)
         })();
         let _ = tx.send(outcome);
     });
@@ -687,5 +702,66 @@ mod tests {
     fn corrupt_configuration_rejected() {
         let mut m = MockTransport::default();
         assert!(m.apply_demo(Region::Config, &[0; 128]).is_err());
+    }
+}
+
+/// A documented read-only identity query. This does not unlock, change pairing,
+/// write identity, switch firmware modes, or send a configuration report.
+pub fn read_model_identity(path: &str) -> Result<[u8; 6]> {
+    let selected = selected_device(path)?;
+    run_device_checked(selected, false, |t| t.read_model_identity())
+}
+fn require_f75_identity(identity: [u8; 6]) -> Result<()> {
+    if identity != [3, 0, 0, 0, 0, 0xcd] {
+        return Err(HidError::Unsupported("Shared USB ID is not the verified original F75 model identity; configuration is blocked. Use the model workspaces for offline editing.".into()));
+    }
+    Ok(())
+}
+#[derive(Debug, Clone, Serialize)]
+pub struct CatalogDevice {
+    pub path: String,
+    pub vendor_id: u16,
+    pub product_id: u16,
+    pub interface_number: i32,
+    pub product_name: String,
+    pub candidates: Vec<String>,
+    pub hardware_access_enabled: bool,
+    pub note: String,
+}
+/// Model candidates from read-only USB metadata. Never opens a handle or guesses
+/// a model when multiple products share the same vendor/product/interface.
+pub fn discover_catalog_devices() -> Result<Vec<CatalogDevice>> {
+    let api = hidapi::HidApi::new().map_err(|e| HidError::Device(e.to_string()))?;
+    let mut result = Vec::new();
+    for info in api.device_list() {
+        let candidates = aula_models::usb_candidates(
+            info.vendor_id(),
+            info.product_id(),
+            info.interface_number(),
+        )
+        .map_err(HidError::Unsupported)?;
+        if candidates.is_empty() {
+            continue;
+        }
+        result.push(CatalogDevice{path:info.path().to_string_lossy().into_owned(),vendor_id:info.vendor_id(),product_id:info.product_id(),interface_number:info.interface_number(),product_name:info.product_string().unwrap_or("").into(),candidates:candidates.iter().map(|m|m.id.clone()).collect(),hardware_access_enabled:false,note:"Metadata candidate only. Shared identifiers do not grant hardware access; new models are offline-only.".into()});
+    }
+    result.sort_by(|a, b| a.path.cmp(&b.path));
+    result.dedup_by(|a, b| a.path == b.path);
+    Ok(result)
+}
+#[cfg(test)]
+mod model_identity_tests {
+    use super::*;
+    #[test]
+    fn shared_vid_pid_does_not_grant_f75_configuration_access() {
+        assert!(require_f75_identity([3, 0, 0, 0, 0, 0xcd]).is_ok());
+        for id in [
+            [3, 0, 0, 0, 0, 0x8f],
+            [3, 0, 0, 0, 1, 0x0b],
+            [3, 0, 0, 0, 1, 0xba],
+            [0; 6],
+        ] {
+            assert!(require_f75_identity(id).is_err());
+        }
     }
 }

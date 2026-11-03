@@ -32,6 +32,6 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo test --workspace --locked
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
-      - run: python3 -m unittest discover -s tests -p 'test_publication.py'
+      - run: python3 -m unittest discover -s tests -p 'test*.py'
       - run: python3 scripts/build-site.py
       - run: python3 scripts/check-publication.py

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -16,7 +17,17 @@ exporter = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(exporter)
 
 
-def build(output=None, portable_archive=None):
+def verify_native_baseline(binary):
+    header=binary.read_bytes()[:20]
+    if len(header)!=20 or header[:6]!=b'\x7fELF\x02\x01' or int.from_bytes(header[18:20], 'little')!=62:
+        raise ValueError('Expected an x86_64 Linux ELF executable')
+    versions=subprocess.check_output(['readelf','--version-info',str(binary)],text=True)
+    requirements=[tuple(map(int,v.split('.'))) for v in re.findall(r'GLIBC_([0-9]+\.[0-9]+)',versions)]
+    if not requirements or max(requirements)>(2,36):
+        raise ValueError('Debian12 package requires a glibc2.36 baseline build, not an arbitrary host binary')
+
+
+def build(output=None, portable_archive=None, binary_directory=None):
     version = tomllib.loads((ROOT / 'Cargo.toml').read_text())['workspace']['package']['version']
     out = Path(output or ROOT / 'dist/linux').resolve()
     if not out.is_relative_to(ROOT / 'dist'):
@@ -48,6 +59,8 @@ def build(output=None, portable_archive=None):
             binary = portable / 'bin' / name
             assert binary.read_bytes().startswith(b'\x7fELF')
             hashes[name] = hashlib.sha256(binary.read_bytes()).hexdigest()
+        verify_native_baseline(portable / 'bin/aula-studio')
+        verify_native_baseline(portable / 'bin/aula')
         notices = (portable / 'THIRD_PARTY_NOTICES.txt').read_text()
         count = notices.count('Source: https://crates.io/crates/')
     else:
@@ -56,7 +69,10 @@ def build(output=None, portable_archive=None):
         (portable / 'bin').mkdir(parents=True)
         hashes = {}
         for name in ['aula-studio', 'aula']:
-            src = ROOT / 'target/release' / name
+            src = Path(binary_directory or ROOT / 'target/release').resolve() / name
+            if not src.is_relative_to(ROOT):
+                raise ValueError('Build binaries must stay inside the project')
+            verify_native_baseline(src)
             assert src.read_bytes().startswith(b'\x7fELF'), name
             shutil.copyfile(src, portable / 'bin' / name)
             (portable / 'bin' / name).chmod(0o755)
@@ -159,5 +175,6 @@ if __name__ == '__main__':
     args = argparse.ArgumentParser(description=__doc__)
     args.add_argument('--output')
     args.add_argument('--portable', help='Package an already-reviewed portable archive without rebuilding/replacing its binary bytes')
+    args.add_argument('--binary-dir', help='Project-local directory containing reviewed Debian12 baseline binaries')
     options = args.parse_args()
-    build(options.output, options.portable)
+    build(options.output, options.portable, options.binary_dir)

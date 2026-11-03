@@ -1,0 +1,6 @@
+# The packaging Dockerfile only copies from its named Node image.
+# Never send installers, analysis, build caches or the workspace to Docker.
+**
+!packaging/
+!packaging/linux/
+!packaging/linux/Dockerfile

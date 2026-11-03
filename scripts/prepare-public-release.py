@@ -20,9 +20,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DOCS = {'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
                'INSTALLATION.md', 'LIMITATIONS.md', 'MEDIA_BINDINGS.md', 'OFFICIAL_FEATURES.md',
                'ORIGINAL_UI.md', 'PROTOCOL.md', 'REVERSE_ENGINEERING.md', 'ROADMAP.md', 'SOURCES.md',
-               'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md'}
+               'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md', 'DOWNLOAD_CATALOG.md', 'MULTI_MODEL_RESEARCH.md', 'MODEL_WORKSPACES.md'}
 ROOT_FILES = {'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'CHANGELOG.md',
-              'Cargo.toml', 'Cargo.lock', '.gitignore'}
+              'Cargo.toml', 'Cargo.lock', '.gitignore', '.dockerignore'}
 SECRET = re.compile(rb'(?:gh[pousr]_[A-Za-z0-9_]{25,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)')
 
 
@@ -36,6 +36,8 @@ def allowed(name):
         return (len(p.parts) == 2 and p.name in PUBLIC_DOCS) or name in {
             'docs/assets/mark.svg', 'docs/screenshots/lighting-demo.png', 'docs/screenshots/macros-demo.png',
             'docs/validation/brightness-2026-11-02.json', 'docs/validation/startup-2026-11-02.json'}
+    if name in {'data/models.json', 'data/download-catalog.json'}:
+        return True
     if name.startswith('fixtures/'):
         return name in {'fixtures/keymap/f87-factory-base.bin', 'fixtures/keymap/f87-factory-fn.bin', 'fixtures/keymap/LICENSE'}
     if name.startswith('site/fonts/'):

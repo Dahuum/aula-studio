@@ -2,12 +2,12 @@
 
 # AULA Studio
 
-### Native Linux software for the original AULA F75.
+### Native Linux keyboard software.
 
 Native configuration for the original ANSI AULA F75.<br>
 Rust · Tauri · React · Wayland · MIT
 
-**Early access · v0.4.3 · USB wired configuration**
+**Early access · v0.5.0 · F75 wired configuration · additional model workspaces**
 
 [Website](https://dahuum.github.io/aula-studio/) · [Downloads](https://github.com/Dahuum/aula-studio/releases) · [Get started](#get-started) · [What works](#what-works) · [Documentation](#documentation) · [Contribute](CONTRIBUTING.md)
 
@@ -34,9 +34,17 @@ This is an independent community project, **not affiliated with AULA**. It is un
 | Onboard macro uploads; wireless configuration | **Unavailable** |
 | Debounce, polling, OS/revision settings and broader shortcut bindings | Under investigation |
 
-**96 passing Rust tests and 37 passing frontend tests**, plus native GUI and startup integration checks, are separate from hardware validation. See the [compatibility matrix](docs/FEATURE_MATRIX.md), [test record](docs/TESTING.md) and [remaining work](docs/ROADMAP.md).
+**111 passing Rust tests and 44 passing frontend tests**, plus native GUI and startup integration checks, are separate from hardware validation. See the [compatibility matrix](docs/FEATURE_MATRIX.md), [test record](docs/TESTING.md) and [remaining work](docs/ROADMAP.md).
 
 **Supported target:** original **ANSI F75**, USB wired mode, `258a:010c`, configuration interface 1 with report `0x06` / 520 bytes. Tested development environment: Arch Linux, Hyprland and Wayland. Other F75 variants, ISO layouts, revisions, Bluetooth and receiver configuration are not assumed compatible. Receiver detection alone does not establish wireless configuration support.
+
+## More AULA models
+
+Version0.5 adds **Device library**, available from **More views**. It provides model-bound local profiles and editors for F87 variants, F108, H108, S75 Pro, S99 Pro, F108 Pro and F98 Pro. Edit recovered layouts, colors where documented, key assignments and focused local macros without a connected device. Save/import/export/history work through the Rust backend.
+
+**These additional models are offline editors, not hardware-supported keyboards.** Their device configuration controls are disabled. F2088 and the acquired mouse packages have research entries only. Shared USB IDs never establish a model: the F75 controller now verifies its exact model identity before configuration access.
+
+We acquired all12 eligible direct Windows packages from the supplied official31-entry catalog and statically analyzed them without executing Windows code. [Model workspaces](docs/MODEL_WORKSPACES.md) · [Download inventory](docs/DOWNLOAD_CATALOG.md) · [REA findings and unresolved protocols](docs/MULTI_MODEL_RESEARCH.md). Onboard uploading and wireless remain unavailable.
 
 ## Get started
 
@@ -46,10 +54,10 @@ Download your package from **[Releases](https://github.com/Dahuum/aula-studio/re
 
 | Distribution | Install the downloaded package |
 | --- | --- |
-| Arch Linux and compatible derivatives | `sudo pacman -U ./aula-studio-0.4.3-1-x86_64.pkg.tar.zst` |
-| Debian 12+, Ubuntu 24.04+ and compatible Mint releases | `sudo apt install ./aula-studio_0.4.3_amd64.deb` |
-| Fedora with WebKitGTK 4.1 | `sudo dnf install ./aula-studio-0.4.3-1.x86_64.rpm` |
-| Other x86_64 GNU/Linux | Extract the portable tarball and run `./aula-studio-0.4.3-linux-x86_64/bin/aula-studio`; system GTK/WebKitGTK libraries required |
+| Arch Linux and compatible derivatives | `sudo pacman -U ./aula-studio-0.5.0-1-x86_64.pkg.tar.zst` |
+| Debian 12+, Ubuntu 24.04+ and compatible Mint releases | `sudo apt install ./aula-studio_0.5.0_amd64.deb` |
+| Fedora with WebKitGTK 4.1 | `sudo dnf install ./aula-studio-0.5.0-1.x86_64.rpm` |
+| Other x86_64 GNU/Linux | Extract the portable tarball and run `./aula-studio-0.5.0-linux-x86_64/bin/aula-studio`; system GTK/WebKitGTK libraries required |
 
 Then launch **AULA Studio** from the desktop menu or run `aula-studio`. Run it as your regular user. Packages include the desktop entry, icon, CLI and narrow wired-F75 udev rule. Reconnect the keyboard after installation. **Node/npm, Rust, Wine and REA are not runtime requirements.**
 
@@ -103,6 +111,8 @@ Known ANSI Fn and function-key input sources are protected. Scoped restoration p
 
 ```sh
 ./target/release/aula devices
+./target/release/aula models
+./target/release/aula model-devices
 ./target/release/aula diagnostics
 ./target/release/aula validate path/to/profile.json
 ```

@@ -6,15 +6,15 @@ Original ANSI AULA F75 configuration is wired USB only. Installing on more distr
 
 ## Downloads and verification
 
-Get files from [the project's GitHub Releases](https://github.com/Dahuum/aula-studio/releases), not a similarly named npm/system package. Download the package for your distribution and `SHA256SUMS` into the same directory. Version 0.4.3 files are:
+Get files from [the project's GitHub Releases](https://github.com/Dahuum/aula-studio/releases), not a similarly named npm/system package. Download the package for your distribution and `SHA256SUMS` into the same directory. Version 0.5.0 files are:
 
 | File | Purpose |
 | --- | --- |
-| `aula-studio-0.4.3-1-x86_64.pkg.tar.zst` | Arch package |
-| `aula-studio_0.4.3_amd64.deb` | Debian-family package |
-| `aula-studio-0.4.3-1.x86_64.rpm` | Fedora-family package |
-| `aula-studio-0.4.3-linux-x86_64.tar.gz` | Portable directory using system runtime libraries |
-| `aula-studio-0.4.3-source.tar.gz` | Source and build instructions |
+| `aula-studio-0.5.0-1-x86_64.pkg.tar.zst` | Arch package |
+| `aula-studio_0.5.0_amd64.deb` | Debian-family package |
+| `aula-studio-0.5.0-1.x86_64.rpm` | Fedora-family package |
+| `aula-studio-0.5.0-linux-x86_64.tar.gz` | Portable directory using system runtime libraries |
+| `aula-studio-0.5.0-source.tar.gz` | Source and build instructions |
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
@@ -27,7 +27,7 @@ Confirm every downloaded file you intend to use reports **OK**, with no mismatch
 After downloading and verifying the Arch package:
 
 ```sh
-sudo pacman -U ./aula-studio-0.4.3-1-x86_64.pkg.tar.zst
+sudo pacman -U ./aula-studio-0.5.0-1-x86_64.pkg.tar.zst
 aula-studio
 ```
 
@@ -42,7 +42,7 @@ Remove the native Arch package with `sudo pacman -R aula-studio` (or `aula-studi
 Debian **12+**, Ubuntu **24.04+**, and derivatives based on them can provide the required glibc/WebKitGTK runtime. Older distributions are not covered by this binary. Install the verified local package using apt so it resolves dependencies:
 
 ```sh
-sudo apt install ./aula-studio_0.4.3_amd64.deb
+sudo apt install ./aula-studio_0.5.0_amd64.deb
 aula-studio
 ```
 
@@ -55,7 +55,7 @@ Remove with `sudo apt remove aula-studio`. There is no hosted apt repository or 
 Use a Fedora release with WebKitGTK 4.1 and glibc 2.36+. Install the verified local RPM:
 
 ```sh
-sudo dnf install ./aula-studio-0.4.3-1.x86_64.rpm
+sudo dnf install ./aula-studio-0.5.0-1.x86_64.rpm
 aula-studio
 ```
 
@@ -66,8 +66,8 @@ Dependencies include `gtk3`, `webkit2gtk4.1`, `systemd-libs`, `libgcc`, `libstdc
 The tarball uses system libraries, not a bundled WebKit. Extract it and run:
 
 ```sh
-tar -xf aula-studio-0.4.3-linux-x86_64.tar.gz
-./aula-studio-0.4.3-linux-x86_64/bin/aula-studio
+tar -xf aula-studio-0.5.0-linux-x86_64.tar.gz
+./aula-studio-0.5.0-linux-x86_64/bin/aula-studio
 ```
 
 Install the GTK 3/WebKitGTK 4.1/libudev/appindicator runtime appropriate to your distribution. Check dependencies with `ldd .../bin/aula-studio`; every required library must resolve. The CLI is `.../bin/aula`. There is no installation into system directories or automatic desktop/udev integration with this format. Optional manual integration is described below.
@@ -144,6 +144,10 @@ Launch from the desktop menu or a terminal in your graphical session. Version 0.
 ```sh
 aula devices
 aula diagnostics
+aula models
+aula model-devices
+aula model-profile path/to/model-profile.json
+aula identity /dev/hidrawN
 aula read /dev/hidrawN
 aula read-layer /dev/hidrawN base
 aula read-layer /dev/hidrawN fn
@@ -169,3 +173,7 @@ Package removal keeps these files. Portable uninstall means deleting the extract
 Distribution install/launch evidence is recorded in [TESTING.md](TESTING.md), separately from F75 hardware validation. A container GUI launch verifies packaging/runtime behavior, not your compositor or physical keyboard. Compatible but untested derivatives remain labeled as such.
 
 References: [Tauri Debian packaging](https://v2.tauri.app/distribute/debian/), [Linux baseline requirements](https://v2.tauri.app/distribute/appimage/), [Fedora WebKitGTK package](https://packages.fedoraproject.org/pkgs/webkitgtk/webkit2gtk4.1/), [Fedora appindicator package](https://packages.fedoraproject.org/pkgs/libayatana-appindicator/libayatana-appindicator-gtk3/).
+
+## Additional-model local workspaces
+
+Version0.5 includes Device library under More views. These additional editors use private model-profiles/ storage and do not enable hardware configuration for the researched models. No additional USB rule is required to edit local drafts. See [model workspaces](MODEL_WORKSPACES.md) before interpreting a model list as physical compatibility.

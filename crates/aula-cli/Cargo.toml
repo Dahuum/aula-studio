@@ -9,6 +9,7 @@ name = "aula"
 path = "src/main.rs"
 
 [dependencies]
+aula-models = { path = "../aula-models" }
 aula-service = { path = "../aula-service" }
 aula-hid = { path = "../aula-hid" }
 aula-protocol = { path = "../aula-protocol" }
