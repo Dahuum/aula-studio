@@ -13,12 +13,17 @@ case "$1" in
   apt-get install -y --no-install-recommends /packages/*.deb xvfb xauth dbus-x11 x11-utils python3 fonts-dejavu-core
   ;;
  rpm)
-  dnf install -y /packages/*.rpm xorg-x11-server-Xvfb xorg-x11-xauth dbus-daemon xorg-x11-utils python3 dejavu-sans-fonts shadow-utils util-linux
+  dnf install -y /packages/*.rpm xorg-x11-server-Xvfb xorg-x11-xauth dbus-daemon xwininfo python3 dejavu-sans-fonts shadow-utils util-linux
   ;;
  *) echo 'Expected deb or rpm' >&2; exit 1;;
 esac
-useradd -m -u 1000 aula-test
-runuser -u aula-test -- env AULA_DISABLE_HARDWARE_WRITES=1 aula diagnostics > /tmp/diagnostics.json
+if getent passwd 1000 >/dev/null; then
+  aula_test_user=$(getent passwd 1000 | cut -d: -f1)
+else
+  useradd -m -u 1000 aula-test
+  aula_test_user=aula-test
+fi
+runuser -u "$aula_test_user" -- env AULA_DISABLE_HARDWARE_WRITES=1 aula diagnostics > /tmp/diagnostics.json
 python3 - <<'PY'
 import json
 v=json.load(open('/tmp/diagnostics.json'))
@@ -28,7 +33,7 @@ PY
 # This container has no USB devices, host display/home mounts or external page.
 # WebKit's extra namespace sandbox cannot start under standard Docker seccomp;
 # this override applies only to this disposable, device-free package smoke test.
-runuser -u aula-test -- env AULA_DISABLE_HARDWARE_WRITES=1 AULA_DATA_DIR=/tmp/aula-smoke-data AULA_NO_ORIGINAL_SKIN=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 GDK_BACKEND=x11 dbus-run-session -- xvfb-run -a python3 - <<'PY'
+runuser -u "$aula_test_user" -- env AULA_DISABLE_HARDWARE_WRITES=1 AULA_DATA_DIR=/tmp/aula-smoke-data AULA_NO_ORIGINAL_SKIN=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 GDK_BACKEND=x11 dbus-run-session -- xvfb-run -a python3 - <<'PY'
 import subprocess,time,json,os
 p=subprocess.Popen(['/usr/bin/aula-studio'],stdout=open('/tmp/aula-smoke.log','w'),stderr=subprocess.STDOUT)
 try:
