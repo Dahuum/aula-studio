@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Actual WebKit browser QA of the local landing page; no external publication."""
 import base64
+import argparse
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -15,6 +16,10 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--reduced-motion', action='store_true', help='Run with actual isolated GTK reduced-motion preference')
+parser.add_argument('--live', action='store_true', help='Verify the published project page instead of localhost')
+options = parser.parse_args()
 OUT = ROOT / 'analysis/site-smoke' / str(time.time_ns())
 OUT.mkdir(parents=True)
 class QuietHandler(SimpleHTTPRequestHandler):
@@ -27,6 +32,9 @@ with socket.socket() as probe:
     probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
 env = dict(os.environ, GDK_BACKEND='x11', WEBKIT_DISABLE_COMPOSITING_MODE='1',
            XDG_DATA_HOME=str(OUT / 'data'), XDG_CONFIG_HOME=str(OUT / 'config'), XDG_CACHE_HOME=str(OUT / 'cache'))
+gtk = OUT / 'config/gtk-3.0'
+gtk.mkdir(parents=True)
+(gtk / 'settings.ini').write_text('[Settings]\ngtk-enable-animations='+('false' if options.reduced_motion else 'true')+'\n')
 log = (OUT / 'driver.log').open('w')
 process = subprocess.Popen(['xvfb-run', '-a', 'WebKitWebDriver', '--host=127.0.0.1', f'--port={port}'],
                            env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
@@ -78,6 +86,7 @@ def screenshot(name):
     execute('document.activeElement?.blur()')
     execute('window.scrollTo({top:0,left:0,behavior:"instant"})')
     wait(lambda: execute('return window.scrollY===0'))
+    request('POST', f'/session/{sid}/execute/async', {'script':'const done=arguments[arguments.length-1];Promise.all(document.getAnimations().filter(a=>a.playState==="running").map(a=>a.finished.catch(()=>{}))).then(()=>done(true));','args':[]})
     request('POST', f'/session/{sid}/execute/async', {'script':'const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));','args':[]})
     (OUT / name).write_bytes(base64.b64decode(request('GET', f'/session/{sid}/screenshot')))
 
@@ -87,9 +96,35 @@ try:
     session=request('POST','/session',{'capabilities':{'alwaysMatch':{'webkitgtk:browserOptions':{'binary':'/usr/lib/webkit2gtk-4.1/MiniBrowser','args':['--automation']}}}})
     sid=session['sessionId']
     request('POST',f'/session/{sid}/window/rect',{'width':1366,'height':1000})
-    request('POST',f'/session/{sid}/url',{'url':f'http://127.0.0.1:{server.server_port}/'})
+    request('POST',f'/session/{sid}/url',{'url':'https://dahuum.github.io/aula-studio/' if options.live else f'http://127.0.0.1:{server.server_port}/'})
     wait(lambda: execute('return document.querySelector("h1")?.textContent.includes("AULA Studio")'))
     wait(lambda: execute('return [...document.images].filter(i=>i.hasAttribute("src")&&i.getClientRects().length>0).every(i=>i.complete&&i.naturalWidth>0)'))
+    request('POST', f'/session/{sid}/execute/async', {'script':'const done=arguments[arguments.length-1];document.fonts.ready.then(()=>done(true));', 'args':[]})
+    assert execute("""return document.fonts.check('520 20px "Instrument Sans"') && document.fonts.check('400 12px "IBM Plex Mono"')""")
+    assert execute('return [...document.fonts].filter(f=>f.status==="loaded").length>=2')
+    actual_reduced = execute('return matchMedia("(prefers-reduced-motion: reduce)").matches')
+    assert actual_reduced == options.reduced_motion, ('Actual browser motion preference differs', actual_reduced)
+    if options.reduced_motion:
+        assert execute('return getComputedStyle(document.querySelector("h1")).animationName==="none" && !document.documentElement.classList.contains("motion-enabled")')
+    else:
+        assert execute('return getComputedStyle(document.querySelector("h1")).animationName==="arrive" && document.documentElement.classList.contains("motion-enabled")')
+    reveal = request('POST', f'/session/{sid}/execute/async', {'script':'''
+      const done=arguments[arguments.length-1], target=document.querySelector(".download-row");
+      target.scrollIntoView({block:"center",behavior:"instant"});
+      if(matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        requestAnimationFrame(()=>requestAnimationFrame(()=>done(target.getAnimations().length===0)));
+      } else {
+        const deadline=performance.now()+2500;
+        function check() {
+          if(target.getAnimations().some(a=>a.effect.getKeyframes().some(k=>k.opacity==="0"))) return done(true);
+          if(performance.now()>deadline) return done(false);
+          requestAnimationFrame(check);
+        }
+        check();
+      }
+    ''', 'args':[]})
+    assert reveal, 'Scroll reveal/reduced-motion behavior not observed'
+    wait(lambda: execute("""return document.querySelector('.header nav a[href="#install"]').getAttribute('aria-current') === 'location'; """))
     assert execute('return document.documentElement.scrollWidth<=innerWidth+1')
     click('//*[@id="tab-macros"]')
     wait(lambda: execute('return !document.getElementById("panel-macros").hidden'))
@@ -115,8 +150,8 @@ try:
     with urllib.request.urlopen(urllib.request.Request(href,method='HEAD'),timeout=10) as response:
         assert response.status==200 and int(response.headers['Content-Length'])>1000
     result={'status':'passed','browser':'actual WebKit MiniBrowser','checks':['desktop and mobile layout','screenshots loaded',
-            'pointer and keyboard tabs','FAQ','copy or selection fallback','image modal open/close','real download HTTP 200'],
-            'network_publication':False,'evidence':str(OUT)}
+            'local fonts actually loaded','real reduced-motion preference' if options.reduced_motion else 'entrance and scroll animations', 'active section navigation','pointer and keyboard tabs','FAQ','copy or selection fallback','image modal open/close','real download HTTP 200'],
+            'network_publication':False,'target':'live' if options.live else 'local','reduced_motion':options.reduced_motion,'evidence':str(OUT)}
     (OUT/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
 except Exception:
     if sid:

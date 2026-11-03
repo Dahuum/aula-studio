@@ -49,6 +49,21 @@ def main():
         elif url.path:
             target = (site / unquote(url.path)).resolve()
             assert target.is_relative_to(site) and target.is_file(), link
+    # Self-hosted fonts must ship with the exact upstream bytes and OFL texts.
+    font_sources = json.loads((site / 'assets/fonts/sources.json').read_text())
+    assert len(font_sources) == 4
+    for font in font_sources:
+        target = site / 'assets/fonts' / font['file']
+        assert target.parent == site / 'assets/fonts'
+        data = target.read_bytes()
+        assert hashlib.sha256(data).hexdigest() == font['sha256'], font['file']
+        assert len(data) == font['bytes'] and font['modified'] is False
+        if target.suffix == '.woff2':
+            assert data.startswith(b'wOF2'), font['file']
+        else:
+            assert b'SIL OPEN FONT LICENSE' in data.upper(), font['file']
+    for asset in re.findall(r'url\("([^"\)]+)"\)', (site / 'style.css').read_text()):
+        assert asset.startswith('assets/fonts/') and (site / asset).is_file(), asset
     source = json.loads((ROOT / 'dist/publication/manifest.json').read_text())
     root = Path(source['source_archive']).parent / f"aula-studio-{source['version']}"
     broken = []

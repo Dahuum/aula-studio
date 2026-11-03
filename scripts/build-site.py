@@ -37,6 +37,7 @@ def build(include_binaries=False, repository_url=None, site_url=None):
     (out / 'docs').mkdir()
     for name in ['style.css', 'app.js']:
         shutil.copyfile(ROOT / 'site' / name, out / name)
+    shutil.copytree(ROOT / 'site/fonts', out / 'assets/fonts')
     shutil.copyfile(ROOT / 'docs/assets/mark.svg', out / 'assets/mark.svg')
     for name in ['lighting-demo.png', 'macros-demo.png']:
         shutil.copyfile(ROOT / 'docs/screenshots' / name, out / 'assets' / name)

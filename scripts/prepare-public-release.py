@@ -38,6 +38,8 @@ def allowed(name):
             'docs/validation/brightness-2026-11-02.json', 'docs/validation/startup-2026-11-02.json'}
     if name.startswith('fixtures/'):
         return name in {'fixtures/keymap/f87-factory-base.bin', 'fixtures/keymap/f87-factory-fn.bin', 'fixtures/keymap/LICENSE'}
+    if name.startswith('site/fonts/'):
+        return p.name in {'instrument-sans.woff2', 'ibm-plex-mono.woff2', 'OFL-instrument-sans.txt', 'OFL-ibm-plex-mono.txt', 'sources.json'} and len(p.parts) == 3
     if name.startswith('third_party/licenses/'):
         return p.suffix in {'.txt', '.json'} and len(p.parts) == 3
     if name in {'packaging/linux/Dockerfile', 'packaging/linux/package-smoke.sh', 'packaging/aur/PKGBUILD', 'packaging/aur/.SRCINFO'}:

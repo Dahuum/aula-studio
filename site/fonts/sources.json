@@ -1,0 +1,30 @@
+[
+  {
+    "file": "instrument-sans.woff2",
+    "source": "https://raw.githubusercontent.com/Instrument/instrument-sans/7fa22308a3d0c94ee2b3cd537a1196b65db34a3e/fonts/webfonts/InstrumentSans%5Bwdth%2Cwght%5D.woff2",
+    "sha256": "aa72922aafcc0dc18f36ec1d805b0212057dabe8b9d5b8b57f67035aea1b826d",
+    "bytes": 88784,
+    "modified": false
+  },
+  {
+    "file": "OFL-instrument-sans.txt",
+    "source": "https://raw.githubusercontent.com/Instrument/instrument-sans/7fa22308a3d0c94ee2b3cd537a1196b65db34a3e/OFL.txt",
+    "sha256": "9e27a72ed30eb49a08678f6a5d6ed98ec7ba5368f541637ee0683ec9134ef966",
+    "bytes": 4403,
+    "modified": false
+  },
+  {
+    "file": "ibm-plex-mono.woff2",
+    "source": "https://raw.githubusercontent.com/IBM/plex/71f558992315a12ca1f06a2215d57962a1992162/packages/plex-mono/fonts/complete/woff2/IBMPlexMono-Regular.woff2",
+    "sha256": "ba204497f16b6d334cee9d1e963a831b73e3a56e1d6300a8489d18df7214b350",
+    "bytes": 49248,
+    "modified": false
+  },
+  {
+    "file": "OFL-ibm-plex-mono.txt",
+    "source": "https://raw.githubusercontent.com/IBM/plex/71f558992315a12ca1f06a2215d57962a1992162/packages/plex-mono/fonts/complete/woff2/license.txt",
+    "sha256": "91c25c350d3cac39da2736d74f7ba37ef648f5237a4e330a240615bc8d8c4360",
+    "bytes": 4360,
+    "modified": false
+  }
+]

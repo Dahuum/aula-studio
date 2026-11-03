@@ -59,3 +59,75 @@ fetch('project.json').then(response => {
     }
   }
 }).catch(() => {}); // Local source downloads remain functional without metadata.
+
+
+// Every section is visible by default. If motion APIs or JS are unavailable,
+// content and controls remain usable, with no hidden reveal classes to clear.
+const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+const revealed = new WeakSet();
+let revealObserver;
+function configureMotion() {
+  revealObserver?.disconnect();
+  if (motionPreference.matches) {
+    document.documentElement.classList.remove('motion-enabled');
+    document.getAnimations?.().forEach(animation => animation.cancel());
+    return;
+  }
+  document.documentElement.classList.add('motion-enabled');
+  if (!('IntersectionObserver' in window) || !Element.prototype.animate) return;
+  revealObserver = new IntersectionObserver(entries => {
+    let order = 0;
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const target = entry.target;
+      revealObserver.unobserve(target);
+      if (revealed.has(target) || motionPreference.matches) continue;
+      revealed.add(target);
+      // Keyboard users should never have a focused control move away from them.
+      if (target.contains(document.activeElement)) continue;
+      target.animate([
+        { opacity: 0, transform: 'translateY(18px)' },
+        { opacity: 1, transform: 'translateY(0)' }
+      ], { duration: 680, delay: Math.min(order++ * 65, 195),
+           easing: 'cubic-bezier(.22,1,.36,1)', fill: 'backwards' });
+    }
+  }, { threshold: 0.12, rootMargin: '0px 0px -32px 0px' });
+  for (const target of document.querySelectorAll('.section-intro, .download-row, .support-table, .workspace-content, .steps>li, .faq-list>details, .footer')) {
+    if (!revealed.has(target)) revealObserver.observe(target);
+  }
+}
+configureMotion();
+motionPreference.addEventListener('change', configureMotion);
+
+// The navigation follows the section in view without a per-frame scroll loop.
+const sectionLinks = [...document.querySelectorAll('.header nav a[href^="#"]')];
+if ('IntersectionObserver' in window) {
+  let currentSection;
+  let navigationFrame;
+  function watchNavigation() {
+    currentSection?.disconnect();
+    const visible = new Set();
+    for (const link of sectionLinks) link.removeAttribute('aria-current');
+    currentSection = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) visible.add(entry.target);
+        else visible.delete(entry.target);
+      }
+      const current = [...visible].sort((a,b) => a.getBoundingClientRect().top-b.getBoundingClientRect().top)[0];
+      for (const link of sectionLinks) {
+        if (current && link.hash === '#'+current.id) link.setAttribute('aria-current', 'location');
+        else link.removeAttribute('aria-current');
+      }
+    // Pixel margins follow viewport height, including on wide, short windows.
+    }, { rootMargin: `-${Math.round(innerHeight*.12)}px 0px -${Math.round(innerHeight*.55)}px 0px` });
+    for (const link of sectionLinks) {
+      const section = document.querySelector(link.hash);
+      if (section) currentSection.observe(section);
+    }
+  }
+  watchNavigation();
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(navigationFrame);
+    navigationFrame = requestAnimationFrame(watchNavigation);
+  }, { passive: true });
+}
