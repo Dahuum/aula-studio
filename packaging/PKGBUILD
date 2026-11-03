@@ -8,7 +8,7 @@ options=('!debug' '!strip')
 license=('MIT')
 depends=('webkit2gtk-4.1' 'gtk3' 'libudev.so' 'libayatana-appindicator')
 source=("aula-studio-${pkgver}-linux-x86_64.tar.gz")
-sha256sums=('6f5dabb9f7461c38d93e015230b6f6311b6a32d4940637d31f9a6567f084f4ed')
+sha256sums=('cd32f6cf5dc7bd528a544523b2904f68379b9214c8525bc07523e08d42660c02')
 package() {
  local stage="$srcdir/aula-studio-${pkgver}-linux-x86_64"
  install -Dm755 "$stage/bin/aula-studio" "$pkgdir/usr/bin/aula-studio"
