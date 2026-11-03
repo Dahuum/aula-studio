@@ -51,7 +51,9 @@ it("reserves release slots at the event limit without releasing an unrecorded ke
   expect(events().slice(-2)).toEqual([{ kind: "down", key: 4 }, { kind: "up", key: 4 }]);
   expect(validateMacro(events())).toBeNull();
   expect(screen.getByRole("button", { name: "Start recording" })).toBeTruthy();
-});
+// Rendering and querying the real 2048-event editor can exceed five seconds on
+// shared CI CPUs. Keep the full boundary/assertions and budget this case only.
+}, 15_000);
 
 it("keeps recording and preview isolated from macro switching and delay edits", () => {
   vi.useFakeTimers();
