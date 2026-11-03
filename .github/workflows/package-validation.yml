@@ -7,7 +7,9 @@ on:
         required: true
         default: v0.4.3
 permissions:
-  contents: read
+  # GitHub hides unpublished release drafts from a read-only job token.
+  # This manual workflow only reads assets; the token never enters containers.
+  contents: write
 jobs:
   install:
     runs-on: ubuntu-24.04
@@ -34,6 +36,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
           PACKAGE_PATTERN: ${{ matrix.pattern }}
         run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           mkdir -p dist/package-test
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist/package-test --pattern "$PACKAGE_PATTERN" --pattern SHA256SUMS
           cd dist/package-test
