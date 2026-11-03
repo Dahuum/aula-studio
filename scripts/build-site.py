@@ -5,6 +5,7 @@ import html
 import hashlib
 import importlib.util
 import json
+import re
 from pathlib import Path
 import shutil
 import zipfile
@@ -56,6 +57,10 @@ def build(include_binaries=False, repository_url=None, site_url=None):
         page = page.replace('@@'+name+'@@', html.escape(value, quote=True))
     if '@@' in page:
         raise ValueError('Unresolved landing-page template value')
+    if project.get('repository_url'):
+        # Pages serves Markdown files as downloads; use GitHub's rendered docs.
+        page = re.sub(r'href="(docs/[^"#]+\.md)"',
+                      lambda match: 'href="'+html.escape(project['repository_url']+'/blob/main/'+match[1], quote=True)+'"', page)
     if project.get('site_url'):
         url = html.escape(project['site_url'], quote=True)
         page = page.replace('</head>', f'<link rel="canonical" href="{url}/">\n<meta property="og:image" content="{url}/assets/lighting-demo.png">\n</head>')
