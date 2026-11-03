@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DOCS = {'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
                'INSTALLATION.md', 'LIMITATIONS.md', 'MEDIA_BINDINGS.md', 'OFFICIAL_FEATURES.md',
                'ORIGINAL_UI.md', 'PROTOCOL.md', 'REVERSE_ENGINEERING.md', 'ROADMAP.md', 'SOURCES.md',
-               'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md'}
+               'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md'}
 ROOT_FILES = {'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'CHANGELOG.md',
               'Cargo.toml', 'Cargo.lock', '.gitignore'}
 SECRET = re.compile(rb'(?:gh[pousr]_[A-Za-z0-9_]{25,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)')
@@ -40,6 +40,8 @@ def allowed(name):
         return name in {'fixtures/keymap/f87-factory-base.bin', 'fixtures/keymap/f87-factory-fn.bin', 'fixtures/keymap/LICENSE'}
     if name.startswith('third_party/licenses/'):
         return p.suffix in {'.txt', '.json'} and len(p.parts) == 3
+    if name in {'packaging/linux/Dockerfile', 'packaging/linux/package-smoke.sh', 'packaging/aur/PKGBUILD', 'packaging/aur/.SRCINFO'}:
+        return True
     if name.startswith('packaging/'):
         return p.name in {'PKGBUILD', '70-aula-f75.rules', 'aula-studio.desktop'} and len(p.parts) == 2
     if name.startswith(('analysis/', 'original/', 'dist/', 'target/', 'publication/')):
@@ -200,7 +202,7 @@ def prepare(include_binaries=False, output=None):
             shutil.copyfile(source / name, portable / name)
         (portable / 'README.md').write_text(
             f'# AULA Studio {version} — Linux portable build\n\n'
-            'Arch-tested x86_64 early-access build. Compatible GTK 3, WebKitGTK 4.1, libudev and appindicator libraries are required.\n\n'
+            'x86_64 GNU/Linux early-access build; Debian 12 / glibc 2.36 baseline. Compatible GTK 3, WebKitGTK 4.1, libudev and appindicator libraries are required. See docs/TESTING.md for distribution validation.\n\n'
             'Run `./bin/aula-studio` as your normal desktop user. `./bin/aula devices` and `./bin/aula diagnostics` are read-only. '
             'Wine, a VM, a browser configurator, REA and the Windows software are not runtime requirements.\n\n'
             'Choose Enter demo mode to explore without a keyboard. Hardware changes require a backup, concrete review and separate Write. '

@@ -78,7 +78,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "aula-cli"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "aula-hid",
  "aula-protocol",
@@ -88,7 +88,7 @@ dependencies = [
 
 [[package]]
 name = "aula-hid"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "aula-protocol",
  "fs2",
@@ -99,7 +99,7 @@ dependencies = [
 
 [[package]]
 name = "aula-protocol"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "serde",
  "thiserror 2.0.21",
@@ -107,7 +107,7 @@ dependencies = [
 
 [[package]]
 name = "aula-service"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "aula-protocol",
  "serde",
@@ -117,7 +117,7 @@ dependencies = [
 
 [[package]]
 name = "aula-studio"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "aula-hid",
  "aula-protocol",

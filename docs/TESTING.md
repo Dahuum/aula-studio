@@ -78,3 +78,15 @@ Final0.4.2 release audit passed (analysis/gtk-startup/artifact-smoke.json):40 ar
 ## Public continuous integration
 
 GitHub Actions uses Rust 1.93.1, matching the compiler used for the tested 0.4.2 native binaries. The first run with moving stable Rust 1.99 passed all 96 Rust tests and 37 frontend tests, then stopped on the newly introduced stylistic `chunks_exact_to_as_chunks` lint. The release pipeline pins the tested toolchain so unrelated lint additions cannot silently change release acceptance. Upgrading that compiler is a separate reviewed maintenance task. This does not change protocol behavior or hardware validation.
+
+## 0.4.3 distribution packaging
+
+Native x86_64 binaries are built in `packaging/linux/Dockerfile`, using Debian 12, Rust 1.93.1 and Node 24. The build container receives only a clean source checkout, no keyboard devices, host display sockets, home directory or secrets. The host Docker bridge was disabled; the local build used temporary host networking for dependency downloads without changing Docker or host network settings. No physical configuration writes occurred.
+
+The resulting executable passed the full native WebKit GUI/demo/profile/macro suite on Arch, and all eight native Wayland/TTY startup cases. The 96 Rust and 37 frontend tests, strict Clippy and formatting pass. The Debian-baseline executable's highest referenced GLIBC symbol is 2.34; packages conservatively require the Debian 12 baseline, glibc 2.36+. Distribution compatibility still depends on GTK/WebKitGTK and package-manager dependencies.
+
+`Package installation` is a manual GitHub Actions matrix: Debian 12, Ubuntu 24.04 and Fedora 43. It verifies release checksums, installs each native package with its package manager in a fresh disposable container, starts the actual GTK window as UID1000 under Xvfb, checks the read-only CLI, then uninstalls and verifies removal. No USB device is passed. Standard Docker seccomp prevents WebKit's extra namespace sandbox; the smoke test disables that extra sandbox only inside the disposable device-free test container. Users are not instructed to disable their desktop sandbox or security settings.
+
+See the [0.4.3 release notes](https://github.com/Dahuum/aula-studio/releases/tag/v0.4.3) and [package-validation workflow runs](https://github.com/Dahuum/aula-studio/actions/workflows/package-validation.yml) for completed matrix results. A committed workflow alone is not a passing test. These tests check package resolution, native startup and uninstallation, not physical USB configuration or a full interactive desktop session on each distribution. Arch's real desktop/Wayland tests remain distinct from container coverage. Mint and other derivatives are compatible targets, not separately tested desktops.
+
+No npm, AUR, apt/dnf repository or Flathub registration is implied by source files or an installation recipe. No ARM, Alpine/musl, AppImage or Flatpak binary is claimed.

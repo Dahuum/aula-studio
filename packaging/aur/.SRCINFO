@@ -1,0 +1,19 @@
+pkgbase = aula-studio-bin
+	pkgdesc = Native AULA F75 configuration with reviewed HID writes and original-layout UI
+	pkgver = 0.4.3
+	pkgrel = 1
+	url = https://github.com/Dahuum/aula-studio
+	arch = x86_64
+	license = MIT
+	depends = webkit2gtk-4.1
+	depends = gtk3
+	depends = libudev.so
+	depends = libayatana-appindicator
+	provides = aula-studio
+	conflicts = aula-studio
+	options = !debug
+	options = !strip
+	source = https://github.com/Dahuum/aula-studio/releases/download/v0.4.3/aula-studio-0.4.3-linux-x86_64.tar.gz
+	sha256sums = 4f7bc6a219ac77485798c31f9a5c4e16e9201b6bf6ab789477b76ece7c7eed1f
+
+pkgname = aula-studio-bin

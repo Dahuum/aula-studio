@@ -1,0 +1,46 @@
+name: Package installation
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release or draft tag
+        required: true
+        default: v0.4.3
+permissions:
+  contents: read
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: debian:12-slim
+            format: deb
+            pattern: '*.deb'
+          - image: ubuntu:24.04
+            format: deb
+            pattern: '*.deb'
+          - image: fedora:43
+            format: rpm
+            pattern: '*.rpm'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Download reviewed package and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          PACKAGE_PATTERN: ${{ matrix.pattern }}
+        run: |
+          mkdir -p dist/package-test
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist/package-test --pattern "$PACKAGE_PATTERN" --pattern SHA256SUMS
+          cd dist/package-test
+          sha256sum --check --ignore-missing SHA256SUMS
+      - name: Install, launch as normal user and uninstall in isolated container
+        env:
+          TEST_IMAGE: ${{ matrix.image }}
+          PACKAGE_FORMAT: ${{ matrix.format }}
+        run: |
+          docker run --rm --env AULA_CONTAINER_PACKAGE_TEST=1 --mount "type=bind,src=$PWD/dist/package-test,dst=/packages,readonly" --mount "type=bind,src=$PWD/packaging/linux/package-smoke.sh,dst=/test.sh,readonly" "$TEST_IMAGE" bash /test.sh "$PACKAGE_FORMAT"

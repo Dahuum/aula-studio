@@ -1,15 +1,13 @@
 <div align="center">
 
-<img src="docs/assets/mark.svg" width="72" height="72" alt="AULA Studio keycap mark">
-
 # AULA Studio
 
-### Your F75, at home on Linux.
+### Native Linux software for the original AULA F75.
 
 Native configuration for the original ANSI AULA F75.<br>
 Rust · Tauri · React · Wayland · MIT
 
-**Early access · v0.4.2 · USB wired configuration**
+**Early access · v0.4.3 · USB wired configuration**
 
 [Website](https://dahuum.github.io/aula-studio/) · [Downloads](https://github.com/Dahuum/aula-studio/releases) · [Get started](#get-started) · [What works](#what-works) · [Documentation](#documentation) · [Contribute](CONTRIBUTING.md)
 
@@ -42,11 +40,26 @@ This is an independent community project, **not affiliated with AULA**. It is un
 
 ## Get started
 
+### Install a native package
+
+Download your package from **[Releases](https://github.com/Dahuum/aula-studio/releases)**, verify it against that release's `SHA256SUMS`, then run:
+
+| Distribution | Install the downloaded package |
+| --- | --- |
+| Arch Linux and compatible derivatives | `sudo pacman -U ./aula-studio-0.4.3-1-x86_64.pkg.tar.zst` |
+| Debian 12+, Ubuntu 24.04+ and compatible Mint releases | `sudo apt install ./aula-studio_0.4.3_amd64.deb` |
+| Fedora with WebKitGTK 4.1 | `sudo dnf install ./aula-studio-0.4.3-1.x86_64.rpm` |
+| Other x86_64 GNU/Linux | Extract the portable tarball and run `./aula-studio-0.4.3-linux-x86_64/bin/aula-studio`; system GTK/WebKitGTK libraries required |
+
+Then launch **AULA Studio** from the desktop menu or run `aula-studio`. Run it as your regular user. Packages include the desktop entry, icon, CLI and narrow wired-F75 udev rule. Reconnect the keyboard after installation. **Node/npm, Rust, Wine and REA are not runtime requirements.**
+
+These binaries are built against **Debian 12 / glibc 2.36**. They do not cover every Linux distribution: Alpine/musl, older glibc releases and ARM binaries are outside the current binary target. See the [installation guide](docs/INSTALLATION.md) for exact prerequisites, checksums, test coverage, USB access, updates and removal.
+
+**Registry status:** no npm package, AUR entry, Flathub listing or hosted apt/dnf repository is published. Native files are available from GitHub Releases. A local [AUR-style binary recipe](packaging/aur/PKGBUILD) is provided; this is not a registered AUR package. Never use an unrelated similarly named package as a substitute.
+
 ### Build from source
 
-Use current stable Rust and Node/npm. Arch build dependencies include `base-devel`, `pkgconf`, `gtk3`, `webkit2gtk-4.1`, `systemd-libs` and `libayatana-appindicator`. Python 3.11+ is used by developer scripts. Dependencies are not installed automatically.
-
-Clone the repository and build:
+Use Rust 1.93.1 (the release-tested compiler) or a compatible newer version, Node 24/npm, Python 3.11+ and native libraries. Distribution-specific prerequisites are in the [guide](docs/INSTALLATION.md).
 
 ```sh
 git clone https://github.com/Dahuum/aula-studio.git
@@ -57,19 +70,7 @@ cargo build --locked --release -p aula-studio -p aula-cli
 ./target/release/aula-studio
 ```
 
-The release bundles its frontend and uses system WebKitGTK. A development web server is not needed. REA, Ghidra and Windows software are analysis tools, **not runtime dependencies**.
-
-### Portable build or Arch package
-
-The portable archive requires compatible GTK/WebKitGTK system libraries. Extract it and run:
-
-```sh
-./aula-studio-0.4.2-linux-x86_64/bin/aula-studio
-```
-
-Build releases locally with `./scripts/build-release.sh`. The [installation guide](docs/INSTALLATION.md) covers Arch packaging, the optional USB permission rule, troubleshooting, data paths and uninstalling. Building never installs a package, rule, driver or service.
-
-Version 0.4.2 handles TTY launch without display variables when a unique user-owned Wayland display is available. It changes only its own environment. Ambiguous or unavailable displays produce a useful error instead of a GTK panic.
+The frontend is embedded; no development web server is needed. Version 0.4.2 fixed TTY launch when a unique trusted user-owned Wayland display is available. Neither release changes your shell or compositor settings.
 
 ## Try it without a keyboard
 

@@ -47,7 +47,7 @@ def build(include_binaries=False, repository_url=None, site_url=None):
     download = Path(report['binary_archive'] or report['source_archive']).name
     values = {'VERSION': version, 'DOWNLOAD_URL': 'downloads/'+download,
               'DOWNLOAD_LABEL': 'Download for Linux' if include_binaries else 'Download source',
-              'DOWNLOAD_NOTE': 'Arch-tested x86_64 build · GTK / WebKitGTK libraries required.' if include_binaries else 'MIT source archive · build instructions included.'}
+              'DOWNLOAD_NOTE': 'x86_64 GNU/Linux · glibc 2.36+ · GTK / WebKitGTK libraries required.' if include_binaries else 'MIT source archive · build instructions included.'}
     if project.get('repository_url') and not include_binaries:
         values.update(DOWNLOAD_URL=project['repository_url']+'/releases', DOWNLOAD_LABEL='View releases',
                       DOWNLOAD_NOTE='Check release availability and runtime requirements. Source download included.')

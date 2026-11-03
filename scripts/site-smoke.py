@@ -88,7 +88,7 @@ try:
     sid=session['sessionId']
     request('POST',f'/session/{sid}/window/rect',{'width':1366,'height':1000})
     request('POST',f'/session/{sid}/url',{'url':f'http://127.0.0.1:{server.server_port}/'})
-    wait(lambda: execute('return document.querySelector("h1")?.textContent.includes("Linux")'))
+    wait(lambda: execute('return document.querySelector("h1")?.textContent.includes("AULA Studio")'))
     wait(lambda: execute('return [...document.images].filter(i=>i.hasAttribute("src")&&i.getClientRects().length>0).every(i=>i.complete&&i.naturalWidth>0)'))
     assert execute('return document.documentElement.scrollWidth<=innerWidth+1')
     click('//*[@id="tab-macros"]')
@@ -97,7 +97,8 @@ try:
     request('POST',f'/session/{sid}/element/{tab}/value',{'text':'\ue012','value':['\ue012']})
     wait(lambda: execute('return document.getElementById("tab-lighting").getAttribute("aria-selected")==="true"'))
     click('//summary[normalize-space()="Does this fully replace the Windows software?"]')
-    assert execute('return [...document.querySelectorAll("details")][0].open')
+    assert execute('return document.querySelector(".faq-list details").open')
+    click('//details[contains(@class,"source-install")]/summary')
     click('//button[@aria-label="Copy build commands"]')
     wait(lambda: execute('return !!document.getElementById("copy-status").textContent'))
     click('//button[@aria-label="Enlarge the native lighting editor screenshot"]')
@@ -110,7 +111,7 @@ try:
     assert execute('return document.documentElement.scrollWidth<=innerWidth+1'), 'Mobile horizontal overflow'
     assert execute('return getComputedStyle(document.querySelector(".header nav")).display==="none"')
     screenshot('mobile.png')
-    href=execute('return document.getElementById("main-download").href')
+    href=execute('return document.querySelector(".source-install>a").href')
     with urllib.request.urlopen(urllib.request.Request(href,method='HEAD'),timeout=10) as response:
         assert response.status==200 and int(response.headers['Content-Length'])>1000
     result={'status':'passed','browser':'actual WebKit MiniBrowser','checks':['desktop and mobile layout','screenshots loaded',

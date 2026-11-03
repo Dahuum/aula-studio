@@ -34,7 +34,7 @@ for (const button of document.querySelectorAll('[data-copy]')) {
     try {
       await navigator.clipboard.writeText(text);
       button.textContent = 'Copied';
-      document.getElementById('copy-status').textContent = 'Build commands copied.';
+      document.getElementById('copy-status').textContent = 'Commands copied.';
     } catch {
       const range = document.createRange();
       range.selectNodeContents(document.getElementById(button.dataset.copy));

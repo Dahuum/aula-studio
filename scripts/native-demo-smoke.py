@@ -6,6 +6,7 @@ calls commit commands. All generated files stay in analysis/native-demo-smoke.
 """
 import argparse
 import base64
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -17,14 +18,17 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--binary', type=Path, help='Validate this packaged native executable instead of target/release')
 parser.add_argument('--xdg', action='store_true', help='Exercise standard XDG config/data paths under the isolated test directory')
 parser.add_argument('--dev', action='store_true', help='Use the locally built debug binary with the loopback Vite development server')
 parser.add_argument('--fallback', action='store_true', help='Disable private original artwork for standalone rendering validation')
 options = parser.parse_args()
-BINARY = ROOT / ('target/debug/aula-studio' if options.dev else 'target/release/aula-studio')
+BINARY = options.binary.resolve() if options.binary else ROOT / ('target/debug/aula-studio' if options.dev else 'target/release/aula-studio')
 inputs = list((ROOT / 'crates').rglob('*.rs')) + list((ROOT / 'app/src-tauri').rglob('*.rs')) + ([] if options.dev else list((ROOT / 'app/dist').rglob('*')))
-if not BINARY.exists() or BINARY.stat().st_mtime < max(p.stat().st_mtime for p in inputs if p.is_file()):
+if not BINARY.exists() or (not options.binary and BINARY.stat().st_mtime < max(p.stat().st_mtime for p in inputs if p.is_file())):
     raise SystemExit('Build the current frontend and release binary first')
+if options.binary and not BINARY.read_bytes().startswith(b'\x7fELF'):
+    raise SystemExit('Expected a trusted native Linux package executable')
 OUT = ROOT / 'analysis/native-demo-smoke' / str(time.time_ns())
 OUT.mkdir(parents=True)
 DATA = OUT / 'data'
@@ -279,7 +283,7 @@ try:
     request('POST', f'/session/{sid}/execute/async', {
         'script': 'const done=arguments[arguments.length-1];window.scrollTo(0,0);document.body.scrollTop=0;document.documentElement.scrollTop=0;document.querySelector("main").scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));', 'args': []})
     (OUT / 'native-demo.png').write_bytes(base64.b64decode(request('GET', f'/session/{sid}/screenshot')))
-    result = {'status': 'passed', 'physical_writes': False, 'storage': str(DATA), 'preferences': str(preferences),
+    result = {'status': 'passed', 'binary_sha256': hashlib.sha256(BINARY.read_bytes()).hexdigest(), 'physical_writes': False, 'storage': str(DATA), 'preferences': str(preferences),
               'storage_mode': 'XDG' if options.xdg else 'AULA_DATA_DIR',
               'artwork': 'private original assets' if assets['assets'] else 'independent standalone graphics',
               'headless_rendering': 'Xvfb; WebKit compositing disabled to avoid software-renderer snapshot hangs',

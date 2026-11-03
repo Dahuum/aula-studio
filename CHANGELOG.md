@@ -21,3 +21,10 @@
 - Preserve reviewed configuration operations, local macros, profiles, diagnostics and demo mode.
 
 Older 0.1–0.3 builds have the corrected bottom-row error and must not be used for mapping/per-key operations. No mapping/per-key write was performed during that earlier development.
+
+## 0.4.3
+
+- Build native Linux packages against Debian 12 / glibc 2.36; add Debian and Fedora formats alongside Arch and portable builds.
+- Document distribution-specific installation, updates, removal and unavailable registry listings.
+- Replace landing-page branding and layout with a typographic design, direct package choices and actual application screenshots.
+- Document evidence levels and physical-validation requirements for researching additional keyboard models.

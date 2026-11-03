@@ -6,6 +6,7 @@ the Xvfb WebKit tests, these deliberately omit DISPLAY and WAYLAND_DISPLAY.
 Every app uses isolated project-local data, demo mode and the write guard.
 """
 import json
+import argparse
 import os
 from pathlib import Path
 import signal
@@ -14,9 +15,12 @@ import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-BINARY = ROOT / 'target/release/aula-studio'
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--binary', type=Path, help='Validate this trusted packaged Linux binary')
+options = parser.parse_args()
+BINARY = options.binary.resolve() if options.binary else ROOT / 'target/release/aula-studio'
 inputs = list((ROOT / 'app/src-tauri/src').glob('*.rs')) + list((ROOT / 'app/dist').rglob('*'))
-assert BINARY.exists() and BINARY.stat().st_mtime >= max(p.stat().st_mtime for p in inputs if p.is_file()), 'Build the current release first'
+assert BINARY.exists() and (options.binary or BINARY.stat().st_mtime >= max(p.stat().st_mtime for p in inputs if p.is_file())), 'Build the current release first'
 OUT = ROOT / 'analysis/native-startup-smoke' / str(time.time_ns())
 OUT.mkdir(parents=True)
 results = []
