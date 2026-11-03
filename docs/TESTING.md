@@ -74,3 +74,7 @@ Evidence: analysis/gtk-startup/{rust-tests,frontend-tests,frontend-build,release
 
 
 Final0.4.2 release audit passed (analysis/gtk-startup/artifact-smoke.json):40 archive entries, portable/Arch binaries equal native-tested hashes, all runtime libraries found, correct0.4.2-1 metadata, unchanged installer hash and no proprietary skin/binary/analysis tree bundled. The actual staged portable command was launched with TTY display variables missing and mapped=true/xwayland=false. No hardware writes/system configuration changes were performed.
+
+## Public continuous integration
+
+GitHub Actions uses Rust 1.93.1, matching the compiler used for the tested 0.4.2 native binaries. The first run with moving stable Rust 1.99 passed all 96 Rust tests and 37 frontend tests, then stopped on the newly introduced stylistic `chunks_exact_to_as_chunks` lint. The release pipeline pins the tested toolchain so unrelated lint additions cannot silently change release acceptance. Upgrading that compiler is a separate reviewed maintenance task. This does not change protocol behavior or hardware validation.

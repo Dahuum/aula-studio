@@ -21,10 +21,10 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: app/package-lock.json
-      - name: Select stable Rust
+      - name: Select release-tested Rust 1.93.1
         run: |
-          rustup toolchain install stable --profile minimal
-          rustup default stable
+          rustup toolchain install 1.93.1 --profile minimal
+          rustup default 1.93.1
           rustup component add clippy rustfmt
       - run: npm --prefix app ci
       - run: npm --prefix app test
