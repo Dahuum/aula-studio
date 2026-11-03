@@ -1,0 +1,19 @@
+[workspace]
+resolver = "2"
+members = ["crates/aula-protocol", "crates/aula-hid", "crates/aula-service", "crates/aula-cli", "app/src-tauri"]
+
+[workspace.package]
+version = "0.4.2"
+edition = "2021"
+license = "MIT"
+rust-version = "1.85"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

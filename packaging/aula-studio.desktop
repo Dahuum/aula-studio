@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=AULA Studio
+Comment=Independent F75 profiles and configuration diagnostics
+Exec=aula-studio
+Icon=aula-studio
+Categories=Settings;HardwareSettings;
+Terminal=false
+StartupWMClass=io.aula.studio

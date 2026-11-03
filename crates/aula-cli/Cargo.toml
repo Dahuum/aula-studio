@@ -1,0 +1,15 @@
+[package]
+name = "aula-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "aula"
+path = "src/main.rs"
+
+[dependencies]
+aula-service = { path = "../aula-service" }
+aula-hid = { path = "../aula-hid" }
+aula-protocol = { path = "../aula-protocol" }
+serde_json.workspace = true

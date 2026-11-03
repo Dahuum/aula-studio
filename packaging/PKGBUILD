@@ -1,0 +1,26 @@
+# Run from packaging after ../scripts/build-release.sh.
+pkgname=aula-studio
+pkgver=0.4.2
+pkgrel=1
+pkgdesc='Native AULA F75 configuration with reviewed HID writes and original-layout UI'
+arch=('x86_64')
+options=('!debug' '!strip')
+license=('MIT')
+depends=('webkit2gtk-4.1' 'gtk3' 'libudev.so' 'libayatana-appindicator')
+source=("aula-studio-${pkgver}-linux-x86_64.tar.gz")
+sha256sums=('6f5dabb9f7461c38d93e015230b6f6311b6a32d4940637d31f9a6567f084f4ed')
+package() {
+ local stage="$srcdir/aula-studio-${pkgver}-linux-x86_64"
+ install -Dm755 "$stage/bin/aula-studio" "$pkgdir/usr/bin/aula-studio"
+ install -Dm755 "$stage/bin/aula" "$pkgdir/usr/bin/aula"
+ install -Dm644 "$stage/share/applications/aula-studio.desktop" "$pkgdir/usr/share/applications/aula-studio.desktop"
+ install -Dm644 "$stage/share/icons/hicolor/128x128/apps/aula-studio.png" "$pkgdir/usr/share/icons/hicolor/128x128/apps/aula-studio.png"
+ install -Dm644 "$stage/share/udev/70-aula-f75.rules" "$pkgdir/usr/lib/udev/rules.d/70-aula-f75.rules"
+ install -Dm644 "$stage/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+ if [[ -f "$stage/THIRD_PARTY_NOTICES.txt" ]]; then
+  install -Dm644 "$stage/THIRD_PARTY_NOTICES.txt" "$pkgdir/usr/share/licenses/$pkgname/THIRD_PARTY_NOTICES.txt"
+ fi
+ install -d "$pkgdir/usr/share/doc/$pkgname"
+ cp -r "$stage/docs/" "$pkgdir/usr/share/doc/$pkgname/"
+ install -Dm644 "$stage/README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+}

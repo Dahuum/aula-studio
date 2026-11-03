@@ -1,0 +1,6 @@
+{
+  "identifier": "main",
+  "description": "Local application window; no shell or network plugins.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

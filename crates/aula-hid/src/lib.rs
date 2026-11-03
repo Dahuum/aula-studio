@@ -1,0 +1,691 @@
+//! Conservative Linux HID access. Enumerating devices never opens a HID handle.
+//! Physical writes are restricted to reviewed, typed configuration transactions.
+use aula_protocol::{ColorTable, ConfigRegion, FeatureReport, ProtocolError, Region, REPORT_SIZE};
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::BTreeMap,
+    path::Path,
+    sync::{mpsc, Mutex},
+    time::{Duration, Instant},
+};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum HidError {
+    #[error("HID access failed: {0}")]
+    Device(String),
+    #[error("This interface is not approved for configuration reads: {0}")]
+    Unsupported(String),
+    #[error("A device operation is already in progress")]
+    Busy,
+    #[error("Device operation timed out; any pending kernel request must finish before retry")]
+    Timeout,
+    #[error("Device disconnected")]
+    Disconnected,
+    #[error(transparent)]
+    Protocol(#[from] ProtocolError),
+}
+pub type Result<T> = std::result::Result<T, HidError>;
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct DeviceSummary {
+    pub path: String,
+    pub vendor_id: u16,
+    pub product_id: u16,
+    pub interface_number: i32,
+    pub product_name: String,
+    pub manufacturer: String,
+    pub usage_page: u16,
+    pub usage: u16,
+    pub connection: String,
+    pub read_supported: bool,
+    pub write_supported: bool,
+    pub feature_report_bytes: Option<usize>,
+    pub reason: String,
+    #[serde(default)]
+    pub connection_id: String,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Snapshot {
+    pub schema_version: u32,
+    pub device: DeviceSummary,
+    pub config: Vec<u8>,
+    pub colors: Vec<u8>,
+    pub source: String,
+}
+impl Snapshot {
+    pub fn validate(&self) -> Result<()> {
+        if self.schema_version != 1 {
+            return Err(HidError::Unsupported("snapshot schema version".into()));
+        }
+        ConfigRegion::parse(&self.config)?;
+        ColorTable::parse(&self.colors)?;
+        Ok(())
+    }
+}
+fn known(vid: u16, pid: u16) -> bool {
+    matches!(
+        (vid, pid),
+        (0x258a, 0x010c) | (0x3554, 0xfa09) | (0x258a, 0x010d)
+    )
+}
+
+/// Read-only metadata discovery. Serial numbers are intentionally omitted.
+pub fn discover() -> Result<Vec<DeviceSummary>> {
+    let api = hidapi::HidApi::new().map_err(|e| HidError::Device(e.to_string()))?;
+    let mut result = Vec::new();
+    for info in api
+        .device_list()
+        .filter(|d| known(d.vendor_id(), d.product_id()))
+    {
+        let path = info.path().to_string_lossy().into_owned();
+        let feature_report_bytes = descriptor_feature_length(&path).ok().flatten();
+        let wired = info.vendor_id() == 0x258a && info.product_id() == 0x010c;
+        let supported =
+            wired && info.interface_number() == 1 && feature_report_bytes == Some(REPORT_SIZE);
+        let reason = if supported {
+            "Descriptor matches wired report 06; bounded reads and reviewed lighting transactions available. Scoped brightness change/readback/restoration tested on wired ANSI F75; other operations and revisions require validation."
+        } else if !wired {
+            "Receiver detected. Wireless configuration framing has not been verified for this hardware."
+        } else {
+            "Configuration requires interface 1 and a descriptor declaring a 520-byte feature report 06."
+        };
+        result.push(DeviceSummary {
+            path: path.clone(),
+            vendor_id: info.vendor_id(),
+            product_id: info.product_id(),
+            interface_number: info.interface_number(),
+            product_name: info
+                .product_string()
+                .unwrap_or("AULA-compatible HID interface")
+                .into(),
+            manufacturer: info.manufacturer_string().unwrap_or("").into(),
+            usage_page: info.usage_page(),
+            usage: info.usage(),
+            connection: if wired { "usb" } else { "wireless" }.into(),
+            read_supported: supported,
+            write_supported: supported,
+            feature_report_bytes,
+            reason: reason.into(),
+            connection_id: connection_identity(&path).unwrap_or_default(),
+        });
+    }
+    result.sort_by(|a, b| a.path.cmp(&b.path).then(a.usage_page.cmp(&b.usage_page)));
+    result.dedup_by(|a, b| a.path == b.path && a.usage_page == b.usage_page && a.usage == b.usage);
+    Ok(result)
+}
+fn descriptor_feature_length(path: &str) -> std::result::Result<Option<usize>, String> {
+    let name = Path::new(path)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .filter(|s| s.starts_with("hidraw") && s[6..].chars().all(|c| c.is_ascii_digit()))
+        .ok_or("Invalid hidraw path")?;
+    let bytes = std::fs::read(
+        Path::new("/sys/class/hidraw")
+            .join(name)
+            .join("device/report_descriptor"),
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(feature_report_lengths(&bytes)?.get(&6).copied())
+}
+
+/// Parse HID short items and global push/pop; sum every Feature main item's bits.
+/// The returned length includes the report-ID byte. Long items are bounded/skipped.
+pub fn feature_report_lengths(bytes: &[u8]) -> std::result::Result<BTreeMap<u8, usize>, String> {
+    if bytes.len() > 4096 {
+        return Err("Descriptor exceeds 4096-byte safety bound".into());
+    }
+    #[derive(Clone, Copy, Default)]
+    struct Globals {
+        size: u32,
+        count: u32,
+        id: u8,
+    }
+    let mut g = Globals::default();
+    let mut stack = Vec::new();
+    let mut bits: BTreeMap<u8, usize> = BTreeMap::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        let p = bytes[i];
+        i += 1;
+        if p == 0xfe {
+            if i + 2 > bytes.len() {
+                return Err("Truncated long descriptor item".into());
+            }
+            let n = bytes[i] as usize;
+            i += 2;
+            if i + n > bytes.len() {
+                return Err("Truncated long descriptor payload".into());
+            }
+            i += n;
+            continue;
+        }
+        let n = match p & 3 {
+            3 => 4,
+            n => n as usize,
+        };
+        if i + n > bytes.len() {
+            return Err("Truncated descriptor item".into());
+        }
+        let mut val = 0u32;
+        for j in 0..n {
+            val |= (bytes[i + j] as u32) << (8 * j)
+        }
+        i += n;
+        let typ = (p >> 2) & 3;
+        let tag = p >> 4;
+        if typ == 1 {
+            match tag {
+                7 => g.size = val,
+                8 => {
+                    if val == 0 || val > 255 {
+                        return Err("Invalid report ID".into());
+                    }
+                    g.id = val as u8
+                }
+                9 => g.count = val,
+                10 => {
+                    if stack.len() >= 16 {
+                        return Err("Descriptor global stack too deep".into());
+                    }
+                    stack.push(g)
+                }
+                11 => g = stack.pop().ok_or("Descriptor global stack underflow")?,
+                _ => {}
+            }
+        } else if typ == 0 && tag == 11 {
+            let n = (g.size as usize)
+                .checked_mul(g.count as usize)
+                .ok_or("Feature size overflow")?;
+            let total = bits.entry(g.id).or_default();
+            *total = total.checked_add(n).ok_or("Feature size overflow")?;
+            if *total > 65535 * 8 {
+                return Err("Feature report exceeds HID size bound".into());
+            }
+        }
+    }
+    if !stack.is_empty() {
+        return Err("Unclosed descriptor global stack".into());
+    }
+    Ok(bits
+        .into_iter()
+        .map(|(id, n)| (id, n.div_ceil(8) + usize::from(id != 0)))
+        .collect())
+}
+
+/// Mockable bounded transaction. No arbitrary packets or memory addresses.
+pub trait Transport {
+    fn read_region(&mut self, region: Region) -> Result<Vec<u8>>;
+}
+pub fn read_region(transport: &mut impl Transport, region: Region) -> Result<Vec<u8>> {
+    transport.read_region(region)
+}
+pub fn snapshot_from_transport(
+    transport: &mut impl Transport,
+    device: DeviceSummary,
+    source: &str,
+) -> Result<Snapshot> {
+    let config = transport.read_region(Region::Config)?;
+    let colors = transport.read_region(Region::Colors)?;
+    let snapshot = Snapshot {
+        schema_version: 1,
+        device,
+        config,
+        colors,
+        source: source.into(),
+    };
+    snapshot.validate()?;
+    Ok(snapshot)
+}
+
+/// Synthetic in-memory device; it never opens physical hardware.
+pub struct MockTransport {
+    config: Vec<u8>,
+    colors: Vec<u8>,
+    connected: bool,
+    fail_next: Option<HidError>,
+}
+impl Default for MockTransport {
+    fn default() -> Self {
+        Self {
+            config: ConfigRegion::demo().as_bytes().to_vec(),
+            colors: ColorTable::black().as_bytes().to_vec(),
+            connected: true,
+            fail_next: None,
+        }
+    }
+}
+impl MockTransport {
+    pub fn set_connected(&mut self, connected: bool) {
+        self.connected = connected;
+    }
+    pub fn fail_next(&mut self, error: HidError) {
+        self.fail_next = Some(error);
+    }
+    pub fn apply_demo(&mut self, region: Region, data: &[u8]) -> Result<()> {
+        self.check()?;
+        let packet = FeatureReport::write(region, data)?;
+        let decoded = FeatureReport::decode_response(region, packet.as_bytes())?;
+        match region {
+            Region::Config => self.config = decoded,
+            Region::Colors => self.colors = decoded,
+        }
+        Ok(())
+    }
+    fn check(&mut self) -> Result<()> {
+        if !self.connected {
+            return Err(HidError::Disconnected);
+        }
+        if let Some(e) = self.fail_next.take() {
+            return Err(e);
+        }
+        Ok(())
+    }
+}
+impl Transport for MockTransport {
+    fn read_region(&mut self, region: Region) -> Result<Vec<u8>> {
+        self.check()?;
+        let data = match region {
+            Region::Config => &self.config,
+            Region::Colors => &self.colors,
+        };
+        Ok(data.clone())
+    }
+}
+pub fn demo_device() -> DeviceSummary {
+    DeviceSummary {
+        path: "mock://f75".into(),
+        vendor_id: 0x258a,
+        product_id: 0x010c,
+        interface_number: 1,
+        product_name: "AULA F75 · simulated".into(),
+        manufacturer: "Demo".into(),
+        usage_page: 0xff00,
+        usage: 1,
+        connection: "demo".into(),
+        read_supported: true,
+        write_supported: false,
+        feature_report_bytes: Some(520),
+        reason: "In-memory simulation. Never sent to hardware.".into(),
+        connection_id: "mock-session".into(),
+    }
+}
+
+pub mod mapping_transaction;
+pub mod transaction;
+
+struct HidTransport {
+    device: hidapi::HidDevice,
+    deadline: Instant,
+}
+impl HidTransport {
+    fn check_deadline(&self) -> Result<()> {
+        if Instant::now() >= self.deadline {
+            Err(HidError::Timeout)
+        } else {
+            Ok(())
+        }
+    }
+}
+impl Transport for HidTransport {
+    fn read_region(&mut self, region: Region) -> Result<Vec<u8>> {
+        self.check_deadline()?;
+        let request = FeatureReport::read(region);
+        self.device
+            .send_feature_report(request.as_bytes())
+            .map_err(|e| HidError::Device(e.to_string()))?;
+        std::thread::sleep(Duration::from_millis(20));
+        self.check_deadline()?;
+        let mut response = [0; REPORT_SIZE];
+        response[0] = 6;
+        let n = self
+            .device
+            .get_feature_report(&mut response)
+            .map_err(|e| HidError::Device(e.to_string()))?;
+        Ok(FeatureReport::decode_response(region, &response[..n])?)
+    }
+}
+impl transaction::ConfigTransport for HidTransport {
+    fn write_region(&mut self, region: Region, data: &[u8]) -> Result<()> {
+        self.check_deadline()?;
+        let packet = FeatureReport::write(region, data)?;
+        self.device
+            .send_feature_report(packet.as_bytes())
+            .map_err(|e| {
+                HidError::Device(format!(
+                    "Configuration write failed; keyboard state may have changed: {e}"
+                ))
+            })?;
+        std::thread::sleep(Duration::from_millis(70));
+        Ok(())
+    }
+}
+impl HidTransport {
+    fn read_report(&self, request: &[u8; REPORT_SIZE]) -> Result<Vec<u8>> {
+        self.check_deadline()?;
+        self.device
+            .send_feature_report(request)
+            .map_err(|e| HidError::Device(e.to_string()))?;
+        std::thread::sleep(Duration::from_millis(20));
+        self.check_deadline()?;
+        let mut response = [0; REPORT_SIZE];
+        response[0] = 6;
+        let n = self
+            .device
+            .get_feature_report(&mut response)
+            .map_err(|e| HidError::Device(e.to_string()))?;
+        Ok(response[..n].to_vec())
+    }
+    fn write_report(&self, report: &[u8; REPORT_SIZE]) -> Result<()> {
+        self.check_deadline()?;
+        self.device
+            .send_feature_report(report)
+            .map_err(|e| HidError::Device(format!("Write outcome may be uncertain: {e}")))?;
+        std::thread::sleep(Duration::from_millis(70));
+        Ok(())
+    }
+}
+impl mapping_transaction::ExtendedTransport for HidTransport {
+    fn read_keymap(&mut self, layer: aula_protocol::Layer) -> Result<aula_protocol::Keymap> {
+        let bytes = self.read_report(aula_protocol::Keymap::read_request(layer).as_bytes())?;
+        Ok(aula_protocol::Keymap::decode_response(layer, &bytes)?)
+    }
+    fn write_keymap(&mut self, map: &aula_protocol::Keymap) -> Result<()> {
+        self.write_report(map.as_bytes())
+    }
+    fn read_per_key(&mut self) -> Result<aula_protocol::PerKeyColors> {
+        let bytes = self.read_report(aula_protocol::PerKeyColors::read_request().as_bytes())?;
+        Ok(aula_protocol::PerKeyColors::decode_response(&bytes)?)
+    }
+    fn write_per_key(&mut self, colors: &aula_protocol::PerKeyColors) -> Result<()> {
+        self.write_report(&colors.offline_report())
+    }
+}
+fn selected_device(path: &str) -> Result<DeviceSummary> {
+    discover()?
+        .into_iter()
+        .find(|d| d.path == path && d.read_supported)
+        .ok_or_else(|| {
+            HidError::Unsupported("device missing or descriptor/interface mismatch".into())
+        })
+}
+pub fn read_keymap_snapshot(
+    path: &str,
+    layer: aula_protocol::Layer,
+) -> Result<(Snapshot, aula_protocol::Keymap)> {
+    use mapping_transaction::ExtendedTransport;
+    let d = selected_device(path)?;
+    let info = d.clone();
+    run_device(d, move |t| {
+        let snapshot = snapshot_from_transport(t, info, "physical_read")?;
+        let map = t.read_keymap(layer)?;
+        let base = if layer == aula_protocol::Layer::Base {
+            map.clone()
+        } else {
+            t.read_keymap(aula_protocol::Layer::Base)?
+        };
+        base.validate_ansi_fn_position()?;
+        Ok((snapshot, map))
+    })
+}
+pub fn read_per_key_snapshot(path: &str) -> Result<(Snapshot, aula_protocol::PerKeyColors)> {
+    use mapping_transaction::ExtendedTransport;
+    let d = selected_device(path)?;
+    let info = d.clone();
+    run_device(d, move |t| {
+        let snapshot = snapshot_from_transport(t, info, "physical_read")?;
+        t.read_keymap(aula_protocol::Layer::Base)?
+            .validate_ansi_fn_position()?;
+        let colors = t.read_per_key()?;
+        Ok((snapshot, colors))
+    })
+}
+/// Only an explicit reviewed GUI action may enter this physical write path.
+pub fn commit_mapping(
+    plan: mapping_transaction::MappingPlan,
+) -> Result<mapping_transaction::MappingResult> {
+    check_write_policy()?;
+    plan.validate()?;
+    let d = plan.before.device.clone();
+    if d.vendor_id != 0x258a
+        || d.product_id != 0x010c
+        || d.interface_number != 1
+        || !d.read_supported
+    {
+        return Err(HidError::Unsupported(
+            "Not a supported wired mapping plan".into(),
+        ));
+    }
+    run_device(d, move |t| {
+        use mapping_transaction::ExtendedTransport;
+        t.read_keymap(aula_protocol::Layer::Base)?
+            .validate_ansi_fn_position()?;
+        mapping_transaction::execute_mapping(t, &plan)
+    })
+}
+fn connection_identity(path: &str) -> Option<String> {
+    let name = Path::new(path).file_name()?;
+    std::fs::canonicalize(Path::new("/sys/class/hidraw").join(name).join("device"))
+        .ok()
+        .map(|p| p.to_string_lossy().into_owned())
+}
+static OPERATION: Mutex<()> = Mutex::new(());
+fn process_lock() -> Result<std::fs::File> {
+    let base = std::env::var_os("XDG_RUNTIME_DIR")
+        .map(std::path::PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .or_else(|| {
+            std::env::var_os("XDG_CACHE_HOME")
+                .map(std::path::PathBuf::from)
+                .filter(|p| p.is_absolute())
+        })
+        .or_else(|| std::env::var_os("HOME").map(|p| std::path::PathBuf::from(p).join(".cache")))
+        .ok_or_else(|| HidError::Device("No user runtime/cache directory for HID lock".into()))?;
+    lock_in_dir(&base.join("aula-studio"))
+}
+fn lock_in_dir(dir: &Path) -> Result<std::fs::File> {
+    use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
+    std::fs::DirBuilder::new()
+        .recursive(true)
+        .mode(0o700)
+        .create(dir)
+        .map_err(|e| HidError::Device(e.to_string()))?;
+    let f = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .read(true)
+        .write(true)
+        .mode(0o600)
+        .open(dir.join("hid.lock"))
+        .map_err(|e| HidError::Device(e.to_string()))?;
+    fs2::FileExt::try_lock_exclusive(&f).map_err(|_| HidError::Busy)?;
+    Ok(f)
+}
+
+#[cfg(test)]
+mod file_lock_tests {
+    use super::*;
+    #[test]
+    fn independent_handles_cannot_overlap_and_close_releases_lock() {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../target/hid-lock-tests")
+            .join(format!(
+                "{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+        let first = lock_in_dir(&dir).unwrap();
+        assert!(matches!(lock_in_dir(&dir), Err(HidError::Busy)));
+        drop(first);
+        let next = lock_in_dir(&dir).unwrap();
+        drop(next);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+fn run_device<T: Send + 'static>(
+    selected: DeviceSummary,
+    operation: impl FnOnce(&mut HidTransport) -> Result<T> + Send + 'static,
+) -> Result<T> {
+    let (tx, rx) = mpsc::channel();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    std::thread::spawn(move || {
+        let outcome = (|| {
+            let _guard = OPERATION.try_lock().map_err(|_| HidError::Busy)?;
+            let _file = process_lock()?;
+            if selected.connection_id.is_empty()
+                || connection_identity(&selected.path).as_deref() != Some(&selected.connection_id)
+            {
+                return Err(HidError::Disconnected);
+            }
+            let api = hidapi::HidApi::new().map_err(|e| HidError::Device(e.to_string()))?;
+            let info = api
+                .device_list()
+                .find(|d| {
+                    d.path().to_bytes() == selected.path.as_bytes()
+                        && d.vendor_id() == 0x258a
+                        && d.product_id() == 0x010c
+                        && d.interface_number() == 1
+                })
+                .ok_or(HidError::Disconnected)?;
+            if descriptor_feature_length(&selected.path).ok().flatten() != Some(REPORT_SIZE) {
+                return Err(HidError::Unsupported("descriptor changed".into()));
+            }
+            let device = info
+                .open_device(&api)
+                .map_err(|e| HidError::Device(e.to_string()))?;
+            operation(&mut HidTransport { device, deadline })
+        })();
+        let _ = tx.send(outcome);
+    });
+    rx.recv_timeout(Duration::from_secs(5))
+        .map_err(|e| match e {
+            mpsc::RecvTimeoutError::Timeout => HidError::Timeout,
+            mpsc::RecvTimeoutError::Disconnected => HidError::Disconnected,
+        })?
+}
+pub fn read_snapshot(path: &str) -> Result<Snapshot> {
+    let selected = discover()?
+        .into_iter()
+        .find(|d| d.path == path && d.read_supported)
+        .ok_or_else(|| {
+            HidError::Unsupported("device missing or descriptor/interface mismatch".into())
+        })?;
+    let device = selected.clone();
+    run_device(selected, move |transport| {
+        snapshot_from_transport(transport, device, "physical_read")
+    })
+}
+/// Only call after a human has reviewed a prepared plan and its durable backup.
+/// No CLI or automated test invokes this physical entry point.
+pub fn commit_lighting(plan: transaction::LightingPlan) -> Result<Snapshot> {
+    check_write_policy()?;
+    plan.validate()?;
+    let selected = plan.before.device.clone();
+    if !selected.read_supported
+        || selected.vendor_id != 0x258a
+        || selected.product_id != 0x010c
+        || selected.interface_number != 1
+    {
+        return Err(HidError::Unsupported(
+            "Not a supported wired lighting plan".into(),
+        ));
+    }
+    run_device(selected, move |transport| {
+        transaction::execute_plan(transport, &plan)
+    })
+}
+
+fn check_write_policy() -> Result<()> {
+    if std::env::var_os("AULA_DISABLE_HARDWARE_WRITES").is_some() {
+        Err(HidError::Unsupported(
+            "Physical configuration writes are disabled by AULA_DISABLE_HARDWARE_WRITES".into(),
+        ))
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn descriptor_count_includes_id() {
+        let d = [0x85, 6, 0x75, 8, 0x96, 7, 2, 0xb1, 2];
+        assert_eq!(feature_report_lengths(&d).unwrap().get(&6), Some(&520));
+    }
+    #[test]
+    fn descriptor_accumulates_and_pushes() {
+        let d = [
+            0x85, 6, 0x75, 8, 0x95, 10, 0xb1, 2, 0xa4, 0x85, 9, 0x95, 2, 0xb1, 2, 0xb4, 0xb1, 2,
+        ];
+        let n = feature_report_lengths(&d).unwrap();
+        assert_eq!(n.get(&6), Some(&21));
+        assert_eq!(n.get(&9), Some(&3));
+    }
+    #[test]
+    fn bad_descriptors() {
+        for d in [
+            vec![0x96, 1],
+            vec![0xb4],
+            vec![0x85, 0],
+            vec![0xfe, 4, 1, 0],
+            vec![0xa4],
+        ] {
+            assert!(feature_report_lengths(&d).is_err())
+        }
+    }
+    #[test]
+    fn mock_disconnect_reconnect() {
+        let mut m = MockTransport::default();
+        m.set_connected(false);
+        assert!(matches!(
+            m.read_region(Region::Config),
+            Err(HidError::Disconnected)
+        ));
+        m.set_connected(true);
+        assert!(m.read_region(Region::Config).is_ok());
+    }
+    #[test]
+    fn timeout_recovery() {
+        let mut m = MockTransport::default();
+        m.fail_next(HidError::Timeout);
+        assert!(matches!(
+            m.read_region(Region::Config),
+            Err(HidError::Timeout)
+        ));
+        assert!(m.read_region(Region::Config).is_ok());
+    }
+    #[test]
+    fn mock_snapshot_and_apply() {
+        let mut m = MockTransport::default();
+        let before = snapshot_from_transport(&mut m, demo_device(), "demo").unwrap();
+        let config = ConfigRegion::parse(&before.config)
+            .unwrap()
+            .with_lighting(aula_protocol::LightingSettings {
+                effect: 7,
+                brightness: 9,
+                speed: 4,
+                colorful: true,
+            })
+            .unwrap();
+        m.apply_demo(Region::Config, config.as_bytes()).unwrap();
+        let after = snapshot_from_transport(&mut m, demo_device(), "demo").unwrap();
+        assert_ne!(before.config, after.config);
+        assert_eq!(after.source, "demo");
+    }
+    #[test]
+    fn invalid_snapshot_schema() {
+        let mut m = MockTransport::default();
+        let mut s = snapshot_from_transport(&mut m, demo_device(), "demo").unwrap();
+        s.schema_version = 2;
+        assert!(s.validate().is_err());
+    }
+    #[test]
+    fn corrupt_configuration_rejected() {
+        let mut m = MockTransport::default();
+        assert!(m.apply_demo(Region::Config, &[0; 128]).is_err());
+    }
+}

@@ -1,0 +1,62 @@
+{
+  "status": "passed",
+  "physical_writes": false,
+  "checks": [
+    {
+      "case": "desktop-default",
+      "status": "passed",
+      "mapped": true,
+      "xwayland": false,
+      "physical_writes": false
+    },
+    {
+      "case": "tty-with-runtime",
+      "status": "passed",
+      "mapped": true,
+      "xwayland": false,
+      "physical_writes": false
+    },
+    {
+      "case": "tty-without-runtime",
+      "status": "passed",
+      "mapped": true,
+      "xwayland": false,
+      "physical_writes": false
+    },
+    {
+      "case": "no-display",
+      "status": "passed",
+      "exit": 1,
+      "no_panic": true,
+      "no_app_data_created": true
+    },
+    {
+      "case": "explicit-x11-no-display",
+      "status": "passed",
+      "exit": 1,
+      "no_panic": true,
+      "no_app_data_created": true
+    },
+    {
+      "case": "explicit-stale-wayland",
+      "status": "passed",
+      "exit": 1,
+      "no_panic": true,
+      "no_app_data_created": true
+    },
+    {
+      "case": "relative-runtime",
+      "status": "passed",
+      "exit": 1,
+      "no_panic": true,
+      "no_app_data_created": true
+    },
+    {
+      "case": "ambiguous-display",
+      "status": "passed",
+      "exit": 1,
+      "no_panic": true,
+      "no_app_data_created": true
+    }
+  ]
+}

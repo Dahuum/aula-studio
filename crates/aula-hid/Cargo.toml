@@ -1,0 +1,12 @@
+[package]
+name = "aula-hid"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+[dependencies]
+aula-protocol = { path = "../aula-protocol" }
+serde.workspace = true
+thiserror.workspace = true
+hidapi = { version = "2.6", default-features = false, features = ["linux-static-hidraw"] }
+
+fs2 = "0.4"

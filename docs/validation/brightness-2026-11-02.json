@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "physical_writes": 2,
+  "scope": "one brightness byte",
+  "config_offset": 60,
+  "original": 6,
+  "test": 5,
+  "all_banks_restored": true,
+  "visible_led_validation": false,
+  "power_cycle_persistence": "not_tested"
+}

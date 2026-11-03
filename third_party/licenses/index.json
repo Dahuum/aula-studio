@@ -1,0 +1,45 @@
+{
+  "alloc-stdlib@0.3.0": {
+    "files": [
+      "alloc-stdlib-0.3.0-LICENSE.txt"
+    ],
+    "sources": [
+      "https://github.com/dropbox/rust-alloc-no-stdlib/blob/0a81fd6928ea3b33c8cd484aa4575d50ffb98012/LICENSE"
+    ]
+  },
+  "dlopen2@0.8.2": {
+    "files": [
+      "dlopen2-0.8.2-LICENSE.txt"
+    ],
+    "sources": [
+      "https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE"
+    ]
+  },
+  "libappindicator-sys@0.9.0": {
+    "files": [
+      "libappindicator-sys-0.9.0-LICENSE-MIT.txt",
+      "libappindicator-sys-0.9.0-LICENSE-APACHE.txt"
+    ],
+    "sources": [
+      "https://github.com/tauri-apps/libappindicator-rs/blob/eafd1e3682a1247f595410266091e9684021cb6f/LICENSE-MIT",
+      "https://github.com/tauri-apps/libappindicator-rs/blob/eafd1e3682a1247f595410266091e9684021cb6f/LICENSE-APACHE"
+    ]
+  },
+  "dlopen2_derive@0.4.3": {
+    "files": [
+      "dlopen2-0.8.2-LICENSE.txt"
+    ],
+    "sources": [
+      "https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE"
+    ]
+  },
+  "selectors@0.38.0": {
+    "files": [
+      "selectors-0.38.0-MPL-2.0.txt"
+    ],
+    "sources": [
+      "https://www.mozilla.org/media/MPL/2.0/index.txt",
+      "https://crates.io/crates/selectors/0.38.0"
+    ]
+  }
+}
