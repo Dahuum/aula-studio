@@ -447,3 +447,4 @@
     grid-template-columns: 1fr;
   }
 }
+.models-layout-note { margin:0 0 14px;padding:9px 12px;border-left:2px solid #667687;background:#1b222b;color:#bbc5d0;font-size:12px;line-height:1.5; }

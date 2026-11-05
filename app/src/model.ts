@@ -22,18 +22,34 @@ export type Profile = {
   fn_layer: Record<string, number>;
   consumer_keymap?: Record<string, number>;
   consumer_fn_layer?: Record<string, number>;
+  mouse_keymap?: Record<string, number>;
+  mouse_fn_layer?: Record<string, number>;
   macros: Macro[];
   updated_at: string;
   sleep_seconds?: number;
 };
 export const mediaActions = [
+  { usage: 0x183, label: "Media player", short: "Media" },
   { usage: 0xcd, label: "Play / pause", short: "Play" },
+  { usage: 0xe2, label: "Mute", short: "Mute" },
   { usage: 0xb7, label: "Stop playback", short: "Stop" },
   { usage: 0xb6, label: "Previous track", short: "Prev" },
   { usage: 0xb5, label: "Next track", short: "Next" },
   { usage: 0xe9, label: "Volume up", short: "Vol+" },
   { usage: 0xea, label: "Volume down", short: "Vol−" },
-  { usage: 0xe2, label: "Mute", short: "Mute" },
+  { usage: 0x223, label: "Browser home", short: "Home" },
+  { usage: 0x192, label: "Calculator", short: "Calc" },
+  { usage: 0x18a, label: "Email reader", short: "Mail" },
+  { usage: 0x194, label: "File browser", short: "Files" },
+  { usage: 0x6f, label: "Display brightness up", short: "Disp+" },
+  { usage: 0x70, label: "Display brightness down", short: "Disp−" },
+] as const;
+export const mouseActions = [
+  { button: 1, label: "Left click", short: "Mouse1" },
+  { button: 2, label: "Right click", short: "Mouse2" },
+  { button: 3, label: "Middle click", short: "Mouse3" },
+  { button: 4, label: "Mouse button 4", short: "Mouse4" },
+  { button: 5, label: "Mouse button 5", short: "Mouse5" },
 ] as const;
 export type Device = {
   path: string;
@@ -268,6 +284,8 @@ export function changed(profile: Profile, saved: Profile | undefined): boolean {
     updated_at: "",
     consumer_keymap: p.consumer_keymap ?? {},
     consumer_fn_layer: p.consumer_fn_layer ?? {},
+    mouse_keymap: p.mouse_keymap ?? {},
+    mouse_fn_layer: p.mouse_fn_layer ?? {},
     lighting: { ...p.lighting, colorful: p.lighting.colorful ?? false },
   });
   return (
@@ -370,7 +388,7 @@ export function parseProfile(text: string): Profile {
     )
       throw new Error("Invalid keyboard usage mapping.");
   }
-  for (const [keyboard, media] of [[p.keymap, p.consumer_keymap], [p.fn_layer, p.consumer_fn_layer]] as const) {
+  for (const [keyboard, media, mouse] of [[p.keymap, p.consumer_keymap, p.mouse_keymap], [p.fn_layer, p.consumer_fn_layer, p.mouse_fn_layer]] as const) {
     if (media !== undefined && (!media || typeof media !== "object" || Array.isArray(media)))
       throw new Error("Invalid media assignments.");
     const seen = new Set(Object.keys(keyboard).map(Number));
@@ -378,6 +396,14 @@ export function parseProfile(text: string): Profile {
       if (!/^\d+$/.test(source) || +source < 1 || +source > 255 || seen.has(+source) ||
           !mediaActions.some(action => action.usage === usage))
         throw new Error("Unsupported or conflicting media assignment.");
+      seen.add(+source);
+    }
+    if (mouse !== undefined && (!mouse || typeof mouse !== "object" || Array.isArray(mouse)))
+      throw new Error("Invalid mouse assignments.");
+    for (const [source, button] of Object.entries(mouse ?? {})) {
+      if (!/^\d+$/.test(source) || +source < 1 || +source > 255 || seen.has(+source) ||
+          !mouseActions.some(action => action.button === button))
+        throw new Error("Unsupported or conflicting mouse assignment.");
       seen.add(+source);
     }
   }

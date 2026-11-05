@@ -305,9 +305,9 @@ pub fn read(kind: String) -> Result<Value> {
                 Layer::Fn
             };
             let (s, m) = aula_hid::read_keymap_snapshot(&path, layer).map_err(|e| e.to_string())?;
-            let (assignments, consumer_assignments) = editable_assignments(&m)?;
+            let (assignments, consumer_assignments, mouse_assignments) = editable_assignments(&m)?;
             Ok(
-                json!({"kind":kind,"snapshot":s,"keymap":m.as_bytes().to_vec(),"assignments":assignments,"consumer_assignments":consumer_assignments}),
+                json!({"kind":kind,"snapshot":s,"keymap":m.as_bytes().to_vec(),"assignments":assignments,"consumer_assignments":consumer_assignments,"mouse_assignments":mouse_assignments}),
             )
         }
         "per_key" => {
@@ -398,11 +398,16 @@ fn binding_name(map: &aula_protocol::Keymap, index: usize) -> String {
         }
         return parts.join(" + ");
     }
+    if r[0] == 1 && r[2..] == [1, 0] {
+        if let Some(name) = aula_protocol::mouse_action_name(u16::from(r[1])) {
+            return name.into();
+        }
+    }
     if r[0] == 3 {
         "Onboard macro binding (in backup)".into()
     } else if r[0] == 2 {
-        if r[1] == 0 && r[2] == 0 {
-            if let Some(name) = aula_protocol::media_action_name(r[3]) {
+        if r[1] == 0 {
+            if let Some(name) = aula_protocol::media_action_name(u16::from_be_bytes([r[2], r[3]])) {
                 return name.into();
             }
         }
@@ -417,9 +422,17 @@ fn binding_name(map: &aula_protocol::Keymap, index: usize) -> String {
 
 fn profile_edits(profile: &Profile, layer: Layer) -> Result<Vec<(u16, KeyAction)>> {
     profile.validate()?;
-    let (keyboard, media) = match layer {
-        Layer::Base => (&profile.keymap, &profile.consumer_keymap),
-        Layer::Fn => (&profile.fn_layer, &profile.consumer_fn_layer),
+    let (keyboard, media, mouse) = match layer {
+        Layer::Base => (
+            &profile.keymap,
+            &profile.consumer_keymap,
+            &profile.mouse_keymap,
+        ),
+        Layer::Fn => (
+            &profile.fn_layer,
+            &profile.consumer_fn_layer,
+            &profile.mouse_fn_layer,
+        ),
     };
     let mut edits = Vec::new();
     for (source, usage) in keyboard {
@@ -427,7 +440,7 @@ fn profile_edits(profile: &Profile, layer: Layer) -> Result<Vec<(u16, KeyAction)
             source.parse::<u16>().map_err(|e| e.to_string())?,
             KeyAction {
                 page: 0,
-                usage: u8::try_from(*usage).map_err(|e| e.to_string())?,
+                usage: *usage,
             },
         ));
     }
@@ -440,21 +453,34 @@ fn profile_edits(profile: &Profile, layer: Layer) -> Result<Vec<(u16, KeyAction)
             },
         ));
     }
+    for (source, usage) in mouse {
+        edits.push((
+            source.parse::<u16>().map_err(|e| e.to_string())?,
+            KeyAction {
+                page: 1,
+                usage: *usage,
+            },
+        ));
+    }
     Ok(edits)
 }
 
-type Assignments = std::collections::BTreeMap<String, u8>;
-fn editable_assignments(map: &aula_protocol::Keymap) -> Result<(Assignments, Assignments)> {
+type Assignments = std::collections::BTreeMap<String, u16>;
+fn editable_assignments(
+    map: &aula_protocol::Keymap,
+) -> Result<(Assignments, Assignments, Assignments)> {
     let mut keyboard = Assignments::new();
     let mut media = Assignments::new();
+    let mut mouse = Assignments::new();
     for usage in 1..=255u16 {
         if (58..=69).contains(&usage) {
             continue;
         }
         if let Ok(index) = matrix_index_for_usage(usage) {
             let action = map.get(index).map_err(|e| e.to_string())?;
-            if ![0, 2].contains(&action.page)
+            if ![0, 1, 2].contains(&action.page)
                 || action.usage == 0
+                || action.validate().is_err()
                 || !map
                     .matches_action(index, action)
                     .map_err(|e| e.to_string())?
@@ -463,12 +489,14 @@ fn editable_assignments(map: &aula_protocol::Keymap) -> Result<(Assignments, Ass
             }
             if action.page == 0 {
                 keyboard.insert(usage.to_string(), action.usage);
+            } else if action.page == 1 {
+                mouse.insert(usage.to_string(), action.usage);
             } else if aula_protocol::media_action_name(action.usage).is_some() {
                 media.insert(usage.to_string(), action.usage);
             }
         }
     }
-    Ok((keyboard, media))
+    Ok((keyboard, media, mouse))
 }
 
 #[cfg(test)]
@@ -529,17 +557,84 @@ mod tests {
             (6, [0, 1, 0, 7]),
             (7, [2, 0, 1, 0x83]),
             (8, [13, 0, 0, 0]),
+            (9, [2, 1, 1, 0x83]),
+            (10, [2, 0, 3, 0xcd]),
+            (11, [0, 0, 1, 4]),
         ] {
             let o = 8 + 4 * matrix_index_for_usage(usage).unwrap();
             bytes[o..o + 4].copy_from_slice(&record);
         }
         let map = aula_protocol::Keymap::parse(&bytes).unwrap();
-        let (keyboard, media) = editable_assignments(&map).unwrap();
+        let (keyboard, media, mouse) = editable_assignments(&map).unwrap();
+        assert!(mouse.is_empty());
         assert_eq!(keyboard, Assignments::from([("5".into(), 0xe0)]));
-        assert_eq!(media, Assignments::from([("4".into(), 0xe9)]));
+        assert_eq!(
+            media,
+            Assignments::from([("4".into(), 0xe9), ("7".into(), 0x183)])
+        );
         assert_eq!(
             binding_name(&map, matrix_index_for_usage(4).unwrap()),
             "Volume up"
         );
+        assert_eq!(
+            binding_name(&map, matrix_index_for_usage(7).unwrap()),
+            "Media player"
+        );
+        assert!(binding_name(&map, matrix_index_for_usage(9).unwrap()).contains("raw backup"));
+    }
+    #[test]
+    fn all_native_media_actions_survive_profile_edits_and_bank_projection() {
+        let mut p = aula_service::decode_profile(r#"{"schema_version":1,"id":"test","name":"Test","lighting":{"effect":1,"brightness":3,"speed":3,"color":[1,2,3],"direction":0},"updated_at":"local"}"#).unwrap();
+        for (i, usage) in aula_protocol::SUPPORTED_MEDIA_USAGES
+            .into_iter()
+            .enumerate()
+        {
+            p.consumer_keymap.insert((4 + i).to_string(), usage);
+            p.consumer_fn_layer.insert((4 + i).to_string(), usage);
+        }
+        for layer in [Layer::Base, Layer::Fn] {
+            let mut map = aula_protocol::Keymap::empty(layer);
+            for (source, action) in profile_edits(&p, layer).unwrap() {
+                map.set(matrix_index_for_usage(source).unwrap(), action)
+                    .unwrap();
+                assert_eq!(
+                    binding_name(&map, matrix_index_for_usage(source).unwrap()),
+                    aula_protocol::media_action_name(action.usage).unwrap()
+                );
+            }
+            let (keyboard, media, mouse) = editable_assignments(&map).unwrap();
+            assert!(mouse.is_empty());
+            assert!(keyboard.is_empty());
+            assert_eq!(media, p.consumer_keymap);
+        }
+    }
+    #[test]
+    fn five_mouse_assignments_roundtrip_without_decoding_repeat_forms() {
+        let mut p = aula_service::decode_profile(r#"{"schema_version":1,"id":"test","name":"Test","lighting":{"effect":1,"brightness":3,"speed":3,"color":[1,2,3],"direction":0},"updated_at":"local"}"#).unwrap();
+        for button in 1..=5 {
+            p.mouse_keymap.insert((button + 3).to_string(), button);
+            p.mouse_fn_layer.insert((button + 3).to_string(), button);
+        }
+        for layer in [Layer::Base, Layer::Fn] {
+            let mut map = aula_protocol::Keymap::empty(layer);
+            for (source, action) in profile_edits(&p, layer).unwrap() {
+                let index = matrix_index_for_usage(source).unwrap();
+                map.set(index, action).unwrap();
+                assert_eq!(
+                    binding_name(&map, index),
+                    aula_protocol::mouse_action_name(action.usage).unwrap()
+                );
+            }
+            let mut raw = map.as_bytes().to_vec();
+            for (source, record) in [(9, [1, 1, 2, 50]), (10, [1, 1, 1, 10]), (11, [1, 6, 1, 0])] {
+                let offset = 8 + 4 * matrix_index_for_usage(source).unwrap();
+                raw[offset..offset + 4].copy_from_slice(&record);
+            }
+            let map = aula_protocol::Keymap::parse(&raw).unwrap();
+            let (keyboard, media, mouse) = editable_assignments(&map).unwrap();
+            assert!(keyboard.is_empty() && media.is_empty());
+            assert_eq!(mouse, p.mouse_keymap);
+            assert_eq!(map.as_bytes().as_slice(), raw);
+        }
     }
 }

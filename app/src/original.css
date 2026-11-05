@@ -44,10 +44,15 @@ body { margin:0; }
 .original-app .original-context { position:absolute;left:66px;top:68px;width:219px;height:652px;border-right:1px solid #343434;background:transparent;overflow:hidden; }
 .original-context h2 { margin:0;padding:14px 13px 9px;font-size:14px;font-weight:400;line-height:20px; }
 .original-context h2 span { float:right;font-size:19px;color:#888; }
-.original-effects,.original-layer-list { display:flex;flex-direction:column; }
-.original-app .original-effects button,.original-app .original-layer-list button { min-height:24px;height:24px;padding:3px 13px;text-align:left;border:0;background:transparent;line-height:18px; }
-.original-app .original-effects button:hover,.original-app .original-layer-list button:hover { background:#353535; }
-.original-app .original-effects button.active,.original-app .original-layer-list button.active { background:#005d91;color:#f0f0f0; }
+.original-effects { display:flex;flex-direction:column; }
+.original-app .original-effects button { min-height:24px;height:24px;padding:3px 13px;text-align:left;border:0;background:transparent;line-height:18px; }
+.original-app .original-effects button:hover { background:#353535; }
+.original-app .original-effects button.active { background:#005d91;color:#f0f0f0; }
+.original-layer-tabs { position:absolute;left:0;top:-55px;width:100%;display:flex;justify-content:flex-end;gap:1px; }
+.original-app .original-layer-tabs button { width:85px;height:45px;min-height:45px;padding:0;border:1px solid #474747;background:#333;color:#b4b4b4; }
+.original-app .original-layer-tabs button:hover { background:#3c3c3c; }
+.original-app .original-layer-tabs button[aria-pressed="true"] { background:#005d91;color:#f0f0f0;border-color:#0a93ff; }
+.original-app[data-page="Key Remapping"] main>.notice[role],.original-app[data-page="Fn Layers"] main>.notice[role] { top:10px;left:150px;right:325px;max-height:52px;overflow-y:auto;overflow-wrap:anywhere;padding:7px 10px;font-size:11px; }
 .original-context-hint { padding:0 13px;color:#b4b4b4;font-size:12px;line-height:1.8; }
 .original-context-hint small { color:#888;font-size:10px; }
 .original-context-bottom { position:absolute;bottom:12px;left:12px;right:12px;font-size:10px;display:flex;align-items:center;justify-content:space-between;gap:4px;color:#888; }
@@ -73,7 +78,7 @@ body { margin:0; }
 .original-app .original-keyboard-panel { position:absolute;left:118px;top:76px;width:679px;height:304px;margin:0;padding:0;border:0;background:none;overflow:visible; }
 .original-keyboard-panel > .panel-heading { display:none; }
 .original-keyboard-panel .keyboard-scroll { overflow:visible;padding:0; }
-.original-keyboard-panel .keyboard { width:679px;min-width:679px;height:304px;aspect-ratio:auto;position:relative;background:none;padding:0;border:0;border-radius:0;box-shadow:none; }
+.original-keyboard-panel .keyboard { width:679px;min-width:679px;height:304px;aspect-ratio:auto;position:relative;background:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none; }
 .original-keyboard-panel .keyboard-surface { position:absolute;inset:8px 0 0;border-radius:18px;background:linear-gradient(165deg,#303234,#111 45%,#292a2c);border:3px double #a8a8a8;box-shadow:inset 0 0 0 4px #111,inset 0 0 0 5px #777,0 3px 0 #111,0 4px 0 #555; }
 .original-app .original-keyboard-panel .key { border-radius:3px;background:linear-gradient(115deg,#35393b,#1b1f21 60%,#111719);border:1px solid #777;box-shadow:inset 0 0 2px #bbb7,1px 2px 2px #000;min-height:0;padding:5px 5px;color:#ddd;display:flex;align-items:flex-start;justify-content:flex-start;font-size:9px;text-align:left;line-height:1.1; }
 .original-keyboard-panel .key > span { position:relative;z-index:1;font-size:9px;white-space:nowrap; }
@@ -181,3 +186,26 @@ body { margin:0; }
 .original-keyboard-panel .key > span { text-shadow:0 0 2px var(--key-color); }
 .original-keyboard-panel .key i { inset:0;border:1px solid var(--key-color);box-shadow:inset 0 -2px 2px var(--key-color),0 0 2px var(--key-color);opacity:var(--preview-brightness,.7); }
 .original-app .original-keyboard-panel .key.selected { background:linear-gradient(110deg,#7b5b58,#343131 45%,#1c1a1a); }
+.original-app .macro-edit-tools { gap:5px; }
+.original-app .macro-edit-tools select { max-width:165px; }
+.original-app .macro-summary,.original-app .macro-preview-status { margin:7px 0;font-size:11px; }
+.original-app .macro-preview-status { background:#202020;border-color:#444; }
+.original-app .event .event-number { font-size:10px;min-height:22px; }
+.original-app .event .event-key-label { flex:1;background:transparent;border:0;padding:2px; }
+.original-app .event select { flex:1;height:23px; }
+.original-app .event .icon-button { min-height:22px;width:22px;padding:0; }
+.original-app .event { grid-template-columns:30px 78px minmax(90px,1fr) 22px 22px 22px; }
+.original-app .original-context .macro-list-panel { padding:0; }
+.original-context #original-macro-list { position:absolute;inset:0 0 44px;height:auto;pointer-events:none; }
+.original-context #original-macro-list > section { height:100%; }
+.original-context .macro-list-panel .panel-heading { position:absolute;top:46px;right:8px;height:18px;margin:0;pointer-events:auto; }
+.original-context .original-macro-toolbar { display:flex;gap:8px; }
+.original-app .original-macro-toolbar button { width:18px;height:18px;min-height:18px;display:grid;place-items:center;padding:0;background:none;border:0;color:#999; }
+.original-app .original-macro-toolbar button:hover { color:#0a93ff;background:#333; }
+.original-macro-toolbar img,.original-macro-toolbar svg { width:18px;height:18px; }
+.original-macro-toolbar svg { stroke:currentColor;stroke-width:1;fill:none; }
+.original-context .macro-list-panel .macro-list,.original-context .macro-list-panel .empty { position:absolute;top:70px;left:0;right:0;max-height:calc(100% - 70px);overflow:auto;margin:0;pointer-events:auto; }
+.original-app .original-context .macro-list button { min-height:28px;height:28px;padding:3px 12px; }
+/* The portal owns this context area. Keep a normal HTML hit region for its
+   transparent icon buttons; the tree itself owns scrolling. */
+.original-context #original-macro-list { pointer-events:auto;overflow:visible; }

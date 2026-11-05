@@ -105,6 +105,14 @@ def text_input(xpath, text):
     request('POST', f'/session/{sid}/element/{field}/value', {'text': text, 'value': list(text)})
 
 
+def paste_input(xpath, text):
+    # WebKitWebDriver drops non-BMP send-keys characters on this build. Exercise
+    # the real controlled input handler as pasted text; never replace native IPC.
+    field = request('POST', f'/session/{sid}/element', {'using': 'xpath', 'value': xpath})
+    execute('const e=arguments[0];Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(e,arguments[1]);e.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertFromPaste",data:arguments[1]}));', [field, text])
+    wait(lambda: execute('return arguments[0].value', [field]) == text)
+
+
 def arrow(label, key):
     field = request('POST', f'/session/{sid}/element', {'using': 'xpath', 'value': f'//input[@aria-label="{label}"]'})['element-6066-11e4-a52e-4f735466cecf']
     request('POST', f'/session/{sid}/element/{field}/value', {'text': key, 'value': [key]})
@@ -222,25 +230,81 @@ try:
     request('POST', f'/session/{sid}/element/{area}/value', {'text': 'a', 'value': ['a']})
     click('Stop recording')
     wait(lambda: execute('return [...document.querySelectorAll("button")].some(b=>b.textContent.trim()==="Start recording")'))
+    # Exercise the event editor before persisting it through the real backend.
+    click('Select event 1')
+    select_option('Insert position', 'after')
+    click('+ Delay')
+    text_input('//input[@aria-label="Delay 2 in milliseconds"]', '25')
+    click('Move event 2 down')
+    click('Move event 3 up')
+    click('Edit key for event 1')
+    select_option('Key for event 1', '5')
+    release_label=execute('return [...document.querySelectorAll(".event")].find(r=>r.querySelector(".event-kind.up")).querySelector(".event-key-label").getAttribute("aria-label")')
+    release_index=int(release_label.split()[-1])
+    click(release_label)
+    select_option('Key for event '+str(release_index), '5')
+    paste_input('//input[@aria-label="Macro name"]', '🎹' * 30)
+    click('Duplicate macro')
+    assert execute('return document.querySelector(arguments[0]).value', ['input[aria-label="Macro name"]']) == '🎹' * 28 + ' (copy)'
+    click('Apply to demo')
+    wait(lambda: len(ok('read_configuration').get('profile', {}).get('macros', [])) == 2)
+    click('Delete')
+    wait(lambda: execute('return document.querySelector(arguments[0]).value', ['input[aria-label="Macro name"]']) == '🎹' * 30)
+    text_input('//input[@aria-label="Macro name"]', 'Macro 1')
     click('Apply to demo')
     wait(lambda: len(ok('read_configuration').get('profile', {}).get('macros', [])) == 1)
     demo = ok('read_configuration')
     key_events = [event for event in demo['profile']['macros'][0]['events'] if event['kind'] != 'delay']
-    assert key_events == [{'kind': 'down', 'key': 4}, {'kind': 'up', 'key': 4}], key_events
+    assert key_events == [{'kind': 'down', 'key': 5}, {'kind': 'up', 'key': 5}], key_events
     assert demo['source'] == 'demo' and demo['profile']['schema_version'] == 1
+    click('Inspect F75 wire format (offline)')
+    wait(lambda: execute('return !!document.querySelector(".modal")'))
+    wire=json.loads(execute('return document.querySelector(".modal textarea").value'))
+    delay=sum(e.get('ms',0) for e in demo['profile']['macros'][0]['events'])
+    assert wire['protocol']=='original_f75_g5' and not wire['hardware_validated'] and not wire['upload_available']
+    assert wire['nominal_duration_ms']==delay and wire['key_events']==2
+    assert wire['record_bytes'][-8:]==[(delay>>16)&15,(delay>>8)&255,delay&255,5,0x80,0,0,5]
+    assert wire['single_record_pool_bytes'][4:]==wire['record_bytes']
+    click('Close')
     screenshot('macros.png')
     # Render every panel through actual React navigation in the native WebView.
     for page in ['Lighting', 'Per-Key RGB', 'Key Remapping', 'Fn Layers', 'Macros',
                  'Profiles', 'Device Settings', 'Diagnostics', 'About', 'Dashboard']:
         navigate(page)
-    for page, field, usage in [('Key Remapping', 'consumer_keymap', 0xcd), ('Fn Layers', 'consumer_fn_layer', 0xe2)]:
+    for page, field, source, source_usage, usage in [
+        ('Key Remapping', 'consumer_keymap', 'A', '4', 0xcd),
+        ('Fn Layers', 'consumer_fn_layer', 'A', '4', 0xe2),
+        ('Key Remapping', 'consumer_keymap', 'B', '5', 0x223),
+        ('Fn Layers', 'consumer_fn_layer', 'B', '5', 0x192),
+    ]:
         navigate(page)
-        click('A')
+        geometry = execute('const k=document.querySelector(".original-keyboard-panel .keyboard").getBoundingClientRect(),tabs=[...document.querySelectorAll(".original-layer-tabs button")],keys=[...document.querySelectorAll(".original-keyboard-panel .key")];return {scale:k.width/679,keyTop:k.top,keyRight:Math.max(...keys.map(e=>e.getBoundingClientRect().right)),tabRight:tabs.at(-1).getBoundingClientRect().right,bottom:tabs[0].getBoundingClientRect().bottom,buttons:tabs.map(b=>{const r=b.getBoundingClientRect();return {width:r.width,height:r.height}})}')
+        assert len(geometry['buttons']) == 2
+        assert abs(geometry['keyRight'] - geometry['tabRight']) < 1
+        assert abs(geometry['keyTop'] - geometry['bottom'] - 10*geometry['scale']) < 1
+        for button in geometry['buttons']:
+            assert abs(button['width'] - 85*geometry['scale']) < 1
+            assert abs(button['height'] - 45*geometry['scale']) < 1
+        click(source)
         select_option('Action type', 'media')
+        assert execute('return [...document.querySelector("select[aria-label=\\"Media action\\"]").options].map(o=>Number(o.value))') == [0x183, 0xcd, 0xe2, 0xb7, 0xb6, 0xb5, 0xe9, 0xea, 0x223, 0x192, 0x18a, 0x194, 0x6f, 0x70]
         select_option('Media action', str(usage))
         click('Assign locally')
         click('Apply to demo')
-        wait(lambda f=field, u=usage: ok('read_configuration').get('profile', {}).get(f, {}).get('4') == u)
+        wait(lambda f=field, s=source_usage, u=usage: ok('read_configuration').get('profile', {}).get(f, {}).get(s) == u)
+        assert execute('return [...document.querySelectorAll(".original-layer-tabs button")].every(b=>{const r=b.getBoundingClientRect();return document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)?.closest("button")===b})'), 'A notification obscures a layer tab'
+        if page == 'Key Remapping':
+            screenshot('key-remapping.png')
+    for page, field, button in [('Key Remapping', 'mouse_keymap', 1), ('Fn Layers', 'mouse_fn_layer', 5)]:
+        navigate(page)
+        click('C')
+        select_option('Action type', 'mouse')
+        assert execute('return [...document.querySelector("select[aria-label=\\"Mouse action\\"]").options].map(o=>Number(o.value))') == [1, 2, 3, 4, 5]
+        select_option('Mouse action', str(button))
+        click('Assign locally')
+        click('Apply to demo')
+        wait(lambda f=field, b=button: ok('read_configuration').get('profile', {}).get(f, {}).get('6') == b)
+    screenshot('mouse-bindings.png')
     demo = ok('read_configuration')
     click('Save profile')
     wait(lambda: len(ok('list_profiles')) == 1)
@@ -249,15 +313,21 @@ try:
     saved = ok('list_profiles')[0]
     exported = json.loads(ok('export_profile', {'id': saved['id']}))
     assert exported['lighting'] == demo['profile']['lighting']
-    assert exported['consumer_keymap'] == {'4': 0xcd} and exported['consumer_fn_layer'] == {'4': 0xe2}
+    assert exported['consumer_keymap'] == {'4': 0xcd, '5': 0x223} and exported['consumer_fn_layer'] == {'4': 0xe2, '5': 0x192}
+    assert exported['mouse_keymap'] == {'6': 1} and exported['mouse_fn_layer'] == {'6': 5}
     assert exported['macros'] == demo['profile']['macros']
     navigate('Profiles')
+    paste_input('//label[contains(.,"Current profile name")]/input', '🎹' * 30)
     click('Duplicate')
-    text_input('//label[contains(.,"Current profile name")]/input', 'Native duplicate')
+    assert request('GET', f'/session/{sid}/alert/text') == 'Discard unsaved changes to the current profile?'
+    request('POST', f'/session/{sid}/alert/accept', {})
     click('Save profile')
     wait(lambda: len(ok('list_profiles')) == 2)
     duplicates = [p for p in ok('list_profiles') if p['id'] != saved['id']]
-    assert len(duplicates) == 1 and duplicates[0]['name'] == 'Native duplicate'
+    assert len(duplicates) == 1 and duplicates[0]['name'] == '🎹' * 28 + ' copy'
+    text_input('//label[contains(.,"Current profile name")]/input', 'Native duplicate')
+    click('Save profile')
+    wait(lambda: any(p['id'] == duplicates[0]['id'] and p['name'] == 'Native duplicate' for p in ok('list_profiles')))
     # Load the original profile through the visible row action.
     load = request('POST', f'/session/{sid}/element', {'using': 'xpath', 'value': f'//div[@class="profile-row"][.//b[normalize-space()="{saved["name"]}"]]//button[normalize-space()="Load"]'})['element-6066-11e4-a52e-4f735466cecf']
     request('POST', f'/session/{sid}/element/{load}/click', {})
@@ -289,7 +359,7 @@ try:
               'headless_rendering': 'Xvfb; WebKit compositing disabled to avoid software-renderer snapshot hangs',
               'checks': ['native write guard', 'disconnected controls when applicable', 'demo toggle/apply/read',
                          'reduced-motion preference and sleep setting in demo',
-                         'all navigation panels and twenty effects', 'hex/RGB/wheel/brightness/speed and palette persistence', 'Fn per-key assign/clear to demo', 'base/Fn media editor to native demo/profile storage', 'focused native macro recording and Stop action', 'native profile save/duplicate/rename/load/export/import and clean saved state', 'backend profile deletion', 'malformed macro rejected', 'small-window canvas bounds',
+                         'all navigation panels and twenty effects', 'hex/RGB/wheel/brightness/speed and palette persistence', 'Fn per-key assign/clear to demo', 'base/Fn media editor to native demo/profile storage', 'focused native macro recording and Stop action', 'native event insertion/reorder/key editing and independent duplicate', 'actual Rust offline G5 wire inspection with no HID commands', 'native profile save/duplicate/rename/load/export/import and clean saved state', 'backend profile deletion', 'malformed macro rejected', 'small-window canvas bounds',
                          'no physical operation journal or backup']}
     (OUT / 'result.json').write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
@@ -298,6 +368,7 @@ except Exception:
         try:
             screenshot('failure.png')
             (OUT / 'failure-state.json').write_text(json.dumps(execute('return {text:document.body.innerText,inputs:[...document.querySelectorAll("input")].map(e=>({label:e.getAttribute("aria-label"),value:e.value,disabled:e.disabled}))}'), indent=2))
+            (OUT / 'failure-buttons.json').write_text(json.dumps(execute('return [...document.querySelectorAll("button")].map(b=>{const r=b.getBoundingClientRect();return {label:b.getAttribute("aria-label")||b.textContent.trim(),rect:{x:r.x,y:r.y,width:r.width,height:r.height},disabled:b.disabled,pointer:getComputedStyle(b).pointerEvents,hit:document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.outerHTML.slice(0,160)}})'),indent=2))
             print('Failure evidence:', OUT, flush=True)
         except Exception:
             pass

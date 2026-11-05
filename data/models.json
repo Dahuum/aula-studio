@@ -2241,7 +2241,7 @@
     },
     "fn_layer": false,
     "notes": [
-      "Resource-derived layout/capabilities. Offline workspace only; hardware access disabled.",
+      "Resource-derived layout/capabilities. Local editing plus an experimental, identity-gated read-only capture adapter. Hardware writes disabled; physical validation pending.",
       "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated."
     ],
     "evidence": [
@@ -3418,7 +3418,7 @@
     },
     "fn_layer": false,
     "notes": [
-      "Resource-derived layout/capabilities. Offline workspace only; hardware access disabled.",
+      "Resource-derived layout/capabilities. Local editing plus an experimental, identity-gated read-only capture adapter. Hardware writes disabled; physical validation pending.",
       "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated."
     ],
     "evidence": [
@@ -4595,7 +4595,7 @@
     },
     "fn_layer": false,
     "notes": [
-      "Resource-derived layout/capabilities. Offline workspace only; hardware access disabled.",
+      "Resource-derived layout/capabilities. Local editing plus an experimental, identity-gated read-only capture adapter. Hardware writes disabled; physical validation pending.",
       "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated."
     ],
     "evidence": [
@@ -6024,8 +6024,9 @@
     },
     "fn_layer": false,
     "notes": [
-      "Resource-derived layout/capabilities. Offline workspace only; hardware access disabled.",
-      "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated."
+      "Resource-derived layout/capabilities with local profile editing. Experimental wired captures are read-only; hardware writes are disabled.",
+      "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated.",
+      "Unreleased 0.6: experimental identity-gated wired read-only captures (128-byte config, 512-byte palette/base, 378-byte RGB). Independently established from this model installer; not physically validated. Configuration writes remain disabled."
     ],
     "evidence": [
       {
@@ -7453,8 +7454,9 @@
     },
     "fn_layer": false,
     "notes": [
-      "Resource-derived layout/capabilities. Offline workspace only; hardware access disabled.",
-      "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated."
+      "Resource-derived layout/capabilities with local profile editing. Experimental wired captures are read-only; hardware writes are disabled.",
+      "USB identifiers are shared with F75; model identity and exact revision must be checked. Hardware parameters are not validated.",
+      "Unreleased 0.6: experimental identity-gated wired read-only captures (128-byte config, 512-byte palette/base, 378-byte RGB). Independently established from this model installer; not physically validated. Configuration writes remain disabled."
     ],
     "evidence": [
       {
@@ -7477,7 +7479,8 @@
         "vendor_id": 3141,
         "product_id": 32778,
         "interface_number": 0,
-        "connection": "usb"
+        "connection": "usb",
+        "product_name": "AULA-S75Pro"
       },
       {
         "vendor_id": 3141,
@@ -9758,7 +9761,8 @@
         "vendor_id": 3141,
         "product_id": 32778,
         "interface_number": 0,
-        "connection": "usb"
+        "connection": "usb",
+        "product_name": "AULA F108Pro"
       },
       {
         "vendor_id": 1452,
@@ -11056,7 +11060,8 @@
         "vendor_id": 3141,
         "product_id": 32778,
         "interface_number": null,
-        "connection": "usb"
+        "connection": "usb",
+        "product_name": "AULA-F98Pro"
       }
     ],
     "model_identity": null,
@@ -12202,11 +12207,200 @@
         "protected": false
       }
     ],
-    "lighting": null,
+    "lighting": {
+      "brightness_max": 5,
+      "speed_max": 5,
+      "default_effect": 1,
+      "effects": [
+        {
+          "id": 0,
+          "name": "LED Off",
+          "controls": {
+            "brightness": false,
+            "speed": false,
+            "color": false
+          }
+        },
+        {
+          "id": 1,
+          "name": "Static",
+          "controls": {
+            "brightness": true,
+            "speed": false,
+            "color": true
+          }
+        },
+        {
+          "id": 2,
+          "name": "SingleOn",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 3,
+          "name": "SingleOff",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 4,
+          "name": "Glittering",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 5,
+          "name": "Falling",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 6,
+          "name": "Colourful",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": false
+          }
+        },
+        {
+          "id": 7,
+          "name": "Breath",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 8,
+          "name": "Spectrum",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": false
+          }
+        },
+        {
+          "id": 9,
+          "name": "Outward",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 10,
+          "name": "Scrolling",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 11,
+          "name": "Rolling",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 12,
+          "name": "Rotating",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 13,
+          "name": "Explode",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 14,
+          "name": "Launch",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 15,
+          "name": "Ripples",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 16,
+          "name": "Flowing",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 17,
+          "name": "Pulsating",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 18,
+          "name": "Tilt",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        },
+        {
+          "id": 19,
+          "name": "Shuttle",
+          "controls": {
+            "brightness": true,
+            "speed": true,
+            "color": true
+          }
+        }
+      ],
+      "per_key": true
+    },
     "fn_layer": true,
     "notes": [
-      "Resource-derived layout/capabilities. Offline workspace only; hardware access disabled.",
-      "Model-specific protocol, response time/screen features and transport remain unverified; no F75 packet reuse."
+      "Recovered95-position layout and native RGB lighting definitions. Local drafts only; F98 hardware configuration remains unavailable.",
+      "The native software defines20 presets with six brightness and speed levels. Unsupported controls are disabled for each effect.",
+      "Older local profiles retain assignments and macros; newly available lighting starts as a local draft until you save.",
+      "Exact physical layout, hardware configuration, sleep settings and onboard macros still need validation."
     ],
     "evidence": [
       {
@@ -12215,6 +12409,20 @@
         "configuration_path": "app/KeyboardLayout.xml",
         "configuration_sha256": "b8dd5ef662562c15c8e9d1c4ad633ce8899cf836679fc14060607caef3c5ef01",
         "level": "official_resource"
+      },
+      {
+        "source_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F98Pro_Software.exe?v=1756176508",
+        "installer_sha256": "d75ffce415aa10f291c7d26afb55e17f6a0308795b27efdabee6a38e510d5935",
+        "configuration_path": "DeviceDriver.exe (native lighting/control construction)",
+        "configuration_sha256": "16fb7173c3b1ab3d080dcb0eb4d648b443aa03b22b324362abaa753122ab19d0",
+        "level": "official_binary_static_analysis"
+      },
+      {
+        "source_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F98Pro_Software.exe?v=1756176508",
+        "installer_sha256": "d75ffce415aa10f291c7d26afb55e17f6a0308795b27efdabee6a38e510d5935",
+        "configuration_path": "mui.dll (native slider limits/color representation)",
+        "configuration_sha256": "efcf4bf8c2a2cd945e0013768d2870edc1704f14dd8fc415a78e931f42873055",
+        "level": "official_binary_static_analysis"
       }
     ]
   },
@@ -12222,23 +12430,1269 @@
     "id": "f2088",
     "name": "AULA F2088",
     "device_kind": "keyboard",
-    "family": "unknown",
-    "status": "investigated_not_hardware_validated",
-    "usb": [],
+    "family": "shinetek-resource",
+    "status": "partial_resource_layout",
+    "usb": [
+      {
+        "vendor_id": 6700,
+        "product_id": 40692,
+        "interface_number": 1,
+        "connection": "usb"
+      }
+    ],
     "model_identity": null,
-    "keys": [],
+    "keys": [
+      {
+        "id": "key-41",
+        "label": "Esc",
+        "usage": 41,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 1,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-58",
+        "label": "F1",
+        "usage": 58,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 53,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-59",
+        "label": "F2",
+        "usage": 59,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 79,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-60",
+        "label": "F3",
+        "usage": 60,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 104,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-61",
+        "label": "F4",
+        "usage": 61,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 130,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-62",
+        "label": "F5",
+        "usage": 62,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 169,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-63",
+        "label": "F6",
+        "usage": 63,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 194,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-64",
+        "label": "F7",
+        "usage": 64,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 221,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-65",
+        "label": "F8",
+        "usage": 65,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 247,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-66",
+        "label": "F9",
+        "usage": 66,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 287,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-67",
+        "label": "F10",
+        "usage": 67,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 312,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-68",
+        "label": "F11",
+        "usage": 68,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 339,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-69",
+        "label": "F12",
+        "usage": 69,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 364,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-70",
+        "label": "PrintScreen",
+        "usage": 70,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 399,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-71",
+        "label": "ScrollLock",
+        "usage": 71,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 424,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-72",
+        "label": "Pause",
+        "usage": 72,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 450,
+        "y": 0,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-53",
+        "label": "~",
+        "usage": 53,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 0,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-30",
+        "label": "1",
+        "usage": 30,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 25,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-31",
+        "label": "2",
+        "usage": 31,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 51,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-32",
+        "label": "3",
+        "usage": 32,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 78,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-33",
+        "label": "4",
+        "usage": 33,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 104,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-34",
+        "label": "5",
+        "usage": 34,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 130,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-35",
+        "label": "6",
+        "usage": 35,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 155,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-36",
+        "label": "7",
+        "usage": 36,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 181,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-37",
+        "label": "8",
+        "usage": 37,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 208,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-38",
+        "label": "9",
+        "usage": 38,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 234,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-39",
+        "label": "0",
+        "usage": 39,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 260,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-45",
+        "label": "-",
+        "usage": 45,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 286,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-46",
+        "label": "=",
+        "usage": 46,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 312,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-42",
+        "label": "Backspace",
+        "usage": 42,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 339,
+        "y": 35,
+        "width": 50,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-73",
+        "label": "Insert",
+        "usage": 73,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 399,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-74",
+        "label": "Home",
+        "usage": 74,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 425,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-75",
+        "label": "PageUp",
+        "usage": 75,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 452,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-83",
+        "label": "NumLock",
+        "usage": 83,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 484,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-84",
+        "label": "Pad /",
+        "usage": 84,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 511,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-85",
+        "label": "Pad *",
+        "usage": 85,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 537,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-86",
+        "label": "Pad -",
+        "usage": 86,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 563,
+        "y": 35,
+        "width": 25,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-43",
+        "label": "Tab",
+        "usage": 43,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 1,
+        "y": 63,
+        "width": 37,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-20",
+        "label": "Q",
+        "usage": 20,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 38,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-26",
+        "label": "W",
+        "usage": 26,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 65,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-8",
+        "label": "E",
+        "usage": 8,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 90,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-21",
+        "label": "R",
+        "usage": 21,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 116,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-23",
+        "label": "T",
+        "usage": 23,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 142,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-28",
+        "label": "Y",
+        "usage": 28,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 169,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-24",
+        "label": "U",
+        "usage": 24,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 195,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-12",
+        "label": "I",
+        "usage": 12,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 221,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-18",
+        "label": "O",
+        "usage": 18,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 247,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-19",
+        "label": "P",
+        "usage": 19,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 273,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-47",
+        "label": "[",
+        "usage": 47,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 299,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-48",
+        "label": "]",
+        "usage": 48,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 325,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-49",
+        "label": "\\",
+        "usage": 49,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 352,
+        "y": 63,
+        "width": 40,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-76",
+        "label": "Del",
+        "usage": 76,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 399,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-77",
+        "label": "End",
+        "usage": 77,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 426,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-78",
+        "label": "PageDown",
+        "usage": 78,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 452,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-95",
+        "label": "Pad 7",
+        "usage": 95,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 486,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-96",
+        "label": "Pad 8",
+        "usage": 96,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 512,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-97",
+        "label": "Pad 9",
+        "usage": 97,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 537,
+        "y": 63,
+        "width": 24,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-87",
+        "label": "Pad +",
+        "usage": 87,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 564,
+        "y": 63,
+        "width": 24,
+        "height": 50,
+        "protected": false
+      },
+      {
+        "id": "key-57",
+        "label": "CapsLock",
+        "usage": 57,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 1,
+        "y": 88,
+        "width": 43,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-4",
+        "label": "A",
+        "usage": 4,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 44,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-22",
+        "label": "S",
+        "usage": 22,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 70,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-7",
+        "label": "D",
+        "usage": 7,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 96,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-9",
+        "label": "F",
+        "usage": 9,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 123,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-10",
+        "label": "G",
+        "usage": 10,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 149,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-11",
+        "label": "H",
+        "usage": 11,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 175,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-13",
+        "label": "J",
+        "usage": 13,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 201,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-14",
+        "label": "K",
+        "usage": 14,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 227,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-15",
+        "label": "L",
+        "usage": 15,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 253,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-51",
+        "label": ";",
+        "usage": 51,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 279,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-52",
+        "label": "'",
+        "usage": 52,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 305,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-40",
+        "label": "Enter",
+        "usage": 40,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 332,
+        "y": 88,
+        "width": 58,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-92",
+        "label": "Pad 4",
+        "usage": 92,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 486,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-93",
+        "label": "Pad 5",
+        "usage": 93,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 510,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-94",
+        "label": "Pad 6",
+        "usage": 94,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 537,
+        "y": 88,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-225",
+        "label": "LeftShif",
+        "usage": 225,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 0,
+        "y": 115,
+        "width": 56,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-29",
+        "label": "Z",
+        "usage": 29,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 60,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-27",
+        "label": "X",
+        "usage": 27,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 84,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-6",
+        "label": "C",
+        "usage": 6,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 110,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-25",
+        "label": "V",
+        "usage": 25,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 136,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-5",
+        "label": "B",
+        "usage": 5,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 163,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-17",
+        "label": "N",
+        "usage": 17,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 188,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-16",
+        "label": "M",
+        "usage": 16,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 215,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-54",
+        "label": ",",
+        "usage": 54,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 241,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-55",
+        "label": ".",
+        "usage": 55,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 267,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-56",
+        "label": "/",
+        "usage": 56,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 293,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-229",
+        "label": "RightShift",
+        "usage": 229,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 319,
+        "y": 115,
+        "width": 69,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-82",
+        "label": "ArrowUp",
+        "usage": 82,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 425,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-89",
+        "label": "Pad 1",
+        "usage": 89,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 485,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-90",
+        "label": "Pad 2",
+        "usage": 90,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 511,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-91",
+        "label": "Pad 3",
+        "usage": 91,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 537,
+        "y": 115,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-88",
+        "label": "Pad Enter",
+        "usage": 88,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 564,
+        "y": 115,
+        "width": 24,
+        "height": 58,
+        "protected": false
+      },
+      {
+        "id": "key-224",
+        "label": "LeftCtrl",
+        "usage": 224,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 1,
+        "y": 145,
+        "width": 30,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-227",
+        "label": "LeftWin",
+        "usage": 227,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 34,
+        "y": 145,
+        "width": 30,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-226",
+        "label": "LeftAtl",
+        "usage": 226,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 67,
+        "y": 145,
+        "width": 30,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-44",
+        "label": "Spacebar",
+        "usage": 44,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 99,
+        "y": 145,
+        "width": 158,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-230",
+        "label": "RightAlt",
+        "usage": 230,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 260,
+        "y": 145,
+        "width": 30,
+        "height": 24,
+        "protected": false
+      },
+      {
+        "id": "key-101",
+        "label": "App",
+        "usage": 101,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 327,
+        "y": 145,
+        "width": 30,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-228",
+        "label": "RightCtrl",
+        "usage": 228,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 360,
+        "y": 145,
+        "width": 30,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-80",
+        "label": "ArrowLeft",
+        "usage": 80,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 400,
+        "y": 145,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-81",
+        "label": "ArrowDown",
+        "usage": 81,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 426,
+        "y": 145,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-79",
+        "label": "ArrowRight",
+        "usage": 79,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 451,
+        "y": 145,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-98",
+        "label": "Pad 0",
+        "usage": 98,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 485,
+        "y": 145,
+        "width": 49,
+        "height": 28,
+        "protected": false
+      },
+      {
+        "id": "key-99",
+        "label": "Pad .",
+        "usage": 99,
+        "matrix_index": null,
+        "light_index": null,
+        "x": 537,
+        "y": 145,
+        "width": 24,
+        "height": 28,
+        "protected": false
+      }
+    ],
     "lighting": null,
     "fn_layer": false,
     "notes": [
-      "Installer acquired and statically inventoried. No validated layout/protocol adapter; no hardware access."
+      "Partial resource-derived local layout:103 positioned keys. One nonzero-sized RightWin record at0,0 is a placeholder and is omitted; no Fn position is invented. Physical layout/revision validation is pending.",
+      "Local assignments/macros/profiles only. LED indexing, lighting parameters, Fn layers and device protocol remain under investigation; no hardware configuration access.",
+      "Advanced Installer containers recovered statically by reversing their first512 byte complements. Bundled Windows filter drivers and executables were never executed or installed."
     ],
     "evidence": [
       {
         "source_url": "https://cdn.shopify.com/s/files/1/0695/6987/1965/files/AULA_F2088_Driver_setup_v1.0.5.7_1_1.exe?v=1762134219",
         "installer_sha256": "8731252ed943e177d659558aef0f0a091a1f630f474abfb35da9459b5b0ed3ee",
-        "configuration_path": "catalog (no verified layout)",
-        "configuration_sha256": "fa39a4e15a0a6a73ef15c2eb5f240c6a873e068ac70659d4996d02720433e31e",
-        "level": "official_catalog"
+        "configuration_path": "MainFeature.cab/positions.xml",
+        "configuration_sha256": "b23c6824a17c39a818040b31402af383ccb7c86555c66181c172a75369662885",
+        "level": "official_resource"
       }
     ]
   },

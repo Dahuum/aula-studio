@@ -69,7 +69,7 @@ export function OriginalNavigation({page,effect,assets,onNavigate,onEffect,demo,
     <section className="original-context" inert={inert} aria-label="Section options">
       <h2>{lighting?"Light effect":mapping?"Key setting":page==="Macros"?"Macro":page==="Profiles"?"Config":page==="Device Settings"?"Global":page}<span aria-hidden="true">»</span></h2>
       {lighting&&<div className="original-effects">{[...effects.filter(e=>e.id!==0),...effects.filter(e=>e.id===0)].map(e=><button key={e.id} className={effect===e.id?"active":""} aria-pressed={effect===e.id} aria-label={e.name} onClick={()=>onEffect(e.id)}>{originalEffectNames[e.id]}</button>)}</div>}
-      {mapping&&<div className="original-layer-list"><button className={page==="Key Remapping"?"active":""} aria-label="Default layer" onClick={()=>onNavigate("Key Remapping")}>Default</button><button className={page==="Fn Layers"?"active":""} aria-label="Fn Layers" onClick={()=>onNavigate("Fn Layers")}>FN1</button></div>}
+      {mapping&&<p className="original-context-hint">Select a key to edit its assignment.<br/><small>Changes stay local until you confirm a hardware write.</small></p>}
       {page==="Macros"&&<div id="original-macro-list"/>}
       {!["Lighting","Per-Key RGB","Key Remapping","Fn Layers","Macros"].includes(page)&&<p className="original-context-hint">AULA F75<br/><small>Native Linux configuration</small></p>}
       <div className="original-context-bottom"><span>{demo?"Demo device":connected?"Wired USB":"Disconnected"}</span><button disabled={busy} onClick={toggleDemo}>{demo?"Exit demo mode":"Enter demo mode"}</button></div>

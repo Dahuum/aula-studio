@@ -155,6 +155,7 @@ fn supported_output(action: KeyAction) -> Result<()> {
     action.validate()?;
     let supported = match action.page {
         0 => (4..=0xa4).contains(&action.usage) || (0xe0..=0xe7).contains(&action.usage),
+        1 => aula_protocol::mouse_action_name(action.usage).is_some(),
         2 => aula_protocol::media_action_name(action.usage).is_some(),
         _ => false,
     };
@@ -433,30 +434,57 @@ mod tests {
         assert_eq!(device.fn_layer.get(58).unwrap(), action());
     }
     #[test]
-    fn media_remap_writes_only_selected_record_in_its_layer() {
-        for layer in [Layer::Base, Layer::Fn] {
-            let mut device = MockExtended::default();
-            let before = device.before();
-            let bank = device.read_keymap(layer).unwrap();
-            let media = KeyAction {
-                page: 2,
-                usage: 0xcd,
-            };
-            let plan = MappingPlan::remap(before, bank, &[(4, media)]).unwrap();
-            let index = matrix_index_for_usage(4).unwrap();
-            let offset = 8 + 4 * index;
-            assert_eq!(
-                &plan.keymap.as_ref().unwrap().as_bytes()[offset..offset + 4],
-                &[2, 0, 0, 0xcd]
+    fn media_and_mouse_remap_write_only_selected_record_in_its_layer() {
+        let actions = aula_protocol::SUPPORTED_MEDIA_USAGES
+            .into_iter()
+            .map(|usage| KeyAction { page: 2, usage })
+            .chain(
+                aula_protocol::SUPPORTED_MOUSE_BUTTONS
+                    .into_iter()
+                    .map(|usage| KeyAction { page: 1, usage }),
             );
-            execute_mapping(&mut device, &plan).unwrap();
-            assert_eq!(device.writes, ["keymap"]);
-            let other = if layer == Layer::Base {
-                &device.fn_layer
-            } else {
-                &device.base
-            };
-            assert_eq!(*other, Keymap::empty(other.layer()));
+        for media in actions {
+            for layer in [Layer::Base, Layer::Fn] {
+                let mut device = MockExtended::default();
+                // Keep an unrelated opaque record to catch lossy normalization.
+                let mut raw = device.base.as_bytes().to_vec();
+                raw[44..48].copy_from_slice(&[0x0d, 0x12, 0x34, 0x56]);
+                device.base = Keymap::parse(&raw).unwrap();
+                let untouched = if layer == Layer::Base {
+                    device.fn_layer.clone()
+                } else {
+                    device.base.clone()
+                };
+                let before = device.before();
+                let bank = device.read_keymap(layer).unwrap();
+                let mut expected = bank.as_bytes().to_vec();
+                let plan = MappingPlan::remap(before, bank, &[(4, media)]).unwrap();
+                let index = matrix_index_for_usage(4).unwrap();
+                let offset = 8 + 4 * index;
+                assert_eq!(
+                    &plan.keymap.as_ref().unwrap().as_bytes()[offset..offset + 4],
+                    &if media.page == 1 {
+                        [1, media.usage as u8, 1, 0]
+                    } else {
+                        [2, 0, (media.usage >> 8) as u8, media.usage as u8]
+                    }
+                );
+                expected[offset..offset + 4].copy_from_slice(&media.record().unwrap());
+                execute_mapping(&mut device, &plan).unwrap();
+                assert_eq!(device.writes, ["keymap"]);
+                let other = if layer == Layer::Base {
+                    &device.fn_layer
+                } else {
+                    &device.base
+                };
+                assert_eq!(*other, untouched);
+                let changed = if layer == Layer::Base {
+                    &device.base
+                } else {
+                    &device.fn_layer
+                };
+                assert_eq!(changed.as_bytes().as_slice(), expected);
+            }
         }
     }
     #[test]

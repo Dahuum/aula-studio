@@ -2,6 +2,8 @@ use serde_json::json;
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str){
+ Some("macro-preview")=>{let path=args.get(1).ok_or("Usage: aula macro-preview EXPORTED_LOCAL_MACRO.json (offline only)")?;let file=std::fs::File::open(path).map_err(|e|e.to_string())?;let mut text=String::new();use std::io::Read;file.take(512*1024+1).read_to_string(&mut text).map_err(|e|e.to_string())?;let p=aula_service::macro_preview::preview_json(&text)?;println!("{}",serde_json::to_string_pretty(&p).map_err(|e|e.to_string())?)},
+ Some("read-model")=>{let path=args.get(1).ok_or("Usage: aula read-model /dev/hidrawN f87|f87-pro-010b|f87-pro-wired|f108|h108")?;let model=args.get(2).ok_or("An explicitly supported resource model id is required; no USB-ID inference")?;let c=aula_hid::read_model_capture(path,model).map_err(|e|e.to_string())?;println!("{}",serde_json::to_string_pretty(&c).map_err(|e|e.to_string())?)},
  Some("models")=>println!("{}",serde_json::to_string_pretty(aula_models::registry()?).unwrap()),
  Some("model-devices")=>println!("{}",serde_json::to_string_pretty(&aula_hid::discover_catalog_devices().map_err(|e|e.to_string())?).unwrap()),
  Some("identity")=>{let path=args.get(1).ok_or("Usage: aula identity /dev/hidrawN (bounded G5 identity read only)")?;let identity=aula_hid::read_model_identity(path).map_err(|e|e.to_string())?;let matches=aula_models::identity_candidates(identity)?;println!("{}",serde_json::to_string_pretty(&json!({"identity":identity,"candidates":matches.iter().map(|m|&m.id).collect::<Vec<_>>(),"configuration_changed":false})).unwrap())},
@@ -13,7 +15,7 @@ fn run() -> Result<(), String> {
  Some("read-per-key")=>{let path=args.get(1).ok_or("Usage: aula read-per-key /dev/hidrawN")?;let(s,c)=aula_hid::read_per_key_snapshot(path).map_err(|e|e.to_string())?;println!("{}",serde_json::to_string_pretty(&json!({"snapshot":s,"per_key":c.as_bytes().to_vec()})).unwrap())},
  Some("validate")=>{let path=args.get(1).ok_or("Usage: aula validate PROFILE.json")?;let p=aula_service::decode_profile(&std::fs::read_to_string(path).map_err(|e|e.to_string())?)?;println!("Valid profile: {} (schema {})",p.name,p.schema_version)},
  Some("profiles")=>println!("{}",serde_json::to_string_pretty(&aula_service::Store::new(aula_service::data_dir())?.list()?).unwrap()),
- _=>println!("AULA Studio diagnostics\n  aula models\n  aula model-devices\n  aula identity /dev/hidrawN\n  aula model-profile PROFILE.json\n  aula devices\n  aula diagnostics\n  aula read /dev/hidrawN\n  aula validate PROFILE.json\n  aula profiles\n\nNo hardware-write commands are included.")};
+ _=>println!("AULA Studio diagnostics\n  aula macro-preview LOCAL_MACRO.json (offline)\n  aula models\n  aula model-devices\n  aula read-model /dev/hidrawN MODEL_ID\n  aula identity /dev/hidrawN\n  aula model-profile PROFILE.json\n  aula devices\n  aula diagnostics\n  aula read /dev/hidrawN\n  aula validate PROFILE.json\n  aula profiles\n\nNo hardware-write commands are included.")};
     Ok(())
 }
 fn main() {

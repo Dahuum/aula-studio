@@ -10,6 +10,12 @@ mod operations;
 mod startup;
 type Result<T> = std::result::Result<T, String>;
 #[tauri::command]
+fn preview_f75_macro_wire(
+    local_macro: aula_service::Macro,
+) -> Result<aula_service::macro_preview::WirePreview> {
+    aula_service::macro_preview::preview(&local_macro)
+}
+#[tauri::command]
 fn local_ui_assets() -> Value {
     local_skin::assets()
 }
@@ -110,6 +116,56 @@ fn export_model_profile(id: String, s: State<AppState>) -> Result<String> {
     serde_json::to_string_pretty(&model_store(&s)?.get(&id)?).map_err(|e| e.to_string())
 }
 
+fn capture_store(s: &State<AppState>) -> Result<aula_models::g5_capture::CaptureStore> {
+    Ok(aula_models::g5_capture::CaptureStore::new(
+        s.store.lock().map_err(|e| e.to_string())?.root(),
+    ))
+}
+#[tauri::command]
+fn list_model_captures(
+    model_id: String,
+    s: State<AppState>,
+) -> Result<Vec<aula_models::g5_capture::Capture>> {
+    capture_store(&s)?.list(&model_id)
+}
+#[tauri::command]
+async fn read_model_capture(
+    model_id: String,
+    path: String,
+    s: State<'_, AppState>,
+) -> Result<aula_models::g5_capture::Capture> {
+    let root = {
+        let store = s.store.lock().map_err(|e| e.to_string())?;
+        if store.preferences()?.demo_mode {
+            return Err("Exit F75 demo mode before physical reads, or use the explicit synthetic capture action".into());
+        }
+        store.root().to_path_buf()
+    };
+    tauri::async_runtime::spawn_blocking(move || {
+        let capture = aula_hid::read_model_capture(&path, &model_id).map_err(|e| e.to_string())?;
+        aula_models::g5_capture::CaptureStore::new(&root).save(&capture)?;
+        Ok(capture)
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+fn simulate_model_capture(
+    model_id: String,
+    s: State<AppState>,
+) -> Result<aula_models::g5_capture::Capture> {
+    let capture = aula_hid::model_read::simulate_capture(&model_id).map_err(|e| e.to_string())?;
+    capture_store(&s)?.save(&capture)?;
+    Ok(capture)
+}
+#[tauri::command]
+fn export_model_capture(id: String, s: State<AppState>) -> Result<String> {
+    serde_json::to_string_pretty(&capture_store(&s)?.get(&id)?).map_err(|e| e.to_string())
+}
+#[tauri::command]
+fn model_capture_draft(id: String, name: String, s: State<AppState>) -> Result<aula_models::Draft> {
+    capture_store(&s)?.get(&id)?.lighting_draft(&name)
+}
 #[tauri::command]
 fn list_profiles(s: State<AppState>) -> Result<Vec<Profile>> {
     s.store.lock().map_err(|e| e.to_string())?.list()
@@ -519,6 +575,7 @@ fn main() {
             mappings: Mutex::new(mapping_operations::PendingMappings::default()),
         })
         .invoke_handler(tauri::generate_handler![
+            preview_f75_macro_wire,
             local_ui_assets,
             window_action,
             get_preferences,
@@ -529,6 +586,11 @@ fn main() {
             model_devices,
             new_model_profile,
             list_model_profiles,
+            list_model_captures,
+            read_model_capture,
+            simulate_model_capture,
+            export_model_capture,
+            model_capture_draft,
             save_model_profile,
             delete_model_profile,
             import_model_profile,

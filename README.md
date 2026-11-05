@@ -7,7 +7,7 @@
 Native configuration for the original ANSI AULA F75.<br>
 Rust · Tauri · React · Wayland · MIT
 
-**Early access · v0.5.0 · F75 wired configuration · additional model workspaces**
+**Early access · published v0.5.0 · development v0.6.0 · F75 wired configuration**
 
 [Website](https://dahuum.github.io/aula-studio/) · [Downloads](https://github.com/Dahuum/aula-studio/releases) · [Get started](#get-started) · [What works](#what-works) · [Documentation](#documentation) · [Contribute](CONTRIBUTING.md)
 
@@ -28,13 +28,13 @@ This is an independent community project, **not affiliated with AULA**. It is un
 | Wired detection; configuration, palette, base/Fn and per-key bank reads | Verified on physical hardware |
 | Theme switching | Visually confirmed by the keyboard owner |
 | Scoped brightness change and restoration | Physically tested: **6 → 5 → 6**, both writes read back, all five banks restored exactly |
-| Preset effects/colors, brightness/speed, per-key RGB, base/Fn keyboard and seven media assignments, sleep and scoped restoration | Real reviewed HID transactions implemented; other write scopes still need physical validation |
+| Preset effects/colors, brightness/speed, per-key RGB, base/Fn keyboard and fourteen media/five mouse-button assignments, sleep and scoped restoration | Real reviewed HID transactions implemented; other write scopes still need physical validation |
 | Profiles, import/export, history, preferences and diagnostics | Implemented and software-tested |
 | Local macro recording, editing, import/export and offline preview | Implemented; preview does not inject keys into other applications |
 | Onboard macro uploads; wireless configuration | **Unavailable** |
 | Debounce, polling, OS/revision settings and broader shortcut bindings | Under investigation |
 
-**111 passing Rust tests and 44 passing frontend tests**, plus native GUI and startup integration checks, are separate from hardware validation. See the [compatibility matrix](docs/FEATURE_MATRIX.md), [test record](docs/TESTING.md) and [remaining work](docs/ROADMAP.md).
+**145 passing Rust tests, 76 frontend tests and 16 Python checks in development**, plus native GUI and startup integration checks, are separate from hardware validation. See the [compatibility matrix](docs/FEATURE_MATRIX.md), [test record](docs/TESTING.md) and [remaining work](docs/ROADMAP.md).
 
 **Supported target:** original **ANSI F75**, USB wired mode, `258a:010c`, configuration interface 1 with report `0x06` / 520 bytes. Tested development environment: Arch Linux, Hyprland and Wayland. Other F75 variants, ISO layouts, revisions, Bluetooth and receiver configuration are not assumed compatible. Receiver detection alone does not establish wireless configuration support.
 
@@ -42,9 +42,15 @@ This is an independent community project, **not affiliated with AULA**. It is un
 
 Version0.5 adds **Device library**, available from **More views**. It provides model-bound local profiles and editors for F87 variants, F108, H108, S75 Pro, S99 Pro, F108 Pro and F98 Pro. Edit recovered layouts, colors where documented, key assignments and focused local macros without a connected device. Save/import/export/history work through the Rust backend.
 
-**These additional models are offline editors, not hardware-supported keyboards.** Their device configuration controls are disabled. F2088 and the acquired mouse packages have research entries only. Shared USB IDs never establish a model: the F75 controller now verifies its exact model identity before configuration access.
+**These additional models are offline editors, not hardware-supported keyboards.** Published0.5 disables their device configuration controls and retains research-only entries for F2088 and the acquired mouse packages. Shared USB IDs never establish a model: the F75 controller verifies its exact model identity before configuration access. The development additions are described below.
 
 We acquired all12 eligible direct Windows packages from the supplied official31-entry catalog and statically analyzed them without executing Windows code. [Model workspaces](docs/MODEL_WORKSPACES.md) · [Download inventory](docs/DOWNLOAD_CATALOG.md) · [REA findings and unresolved protocols](docs/MULTI_MODEL_RESEARCH.md). Onboard uploading and wireless remain unavailable.
+
+## Development branch
+
+The local source is **unreleased 0.6.0**; published downloads above remain0.5.0. Development adds experimental wired read-only captures for three exact F87 variants, F108 and H108, private raw exports and local lighting-draft projection. These readers are software-tested, **not physically validated**; new-model writes remain disabled. [F87 contract](docs/F87_READ_CONTRACT.md) · [F108/H108 contracts](docs/G5_READ_CONTRACTS.md). Build with the commands below and run `./target/release/aula-studio`. Synthetic captures are explicitly labeled and do not establish hardware compatibility. Development also adds richer local macro editing and a Rust-backed [offline F75 wire inspector](docs/MACRO_FORMAT.md); hardware macro uploading remains disabled. F2088 now has a [partial103-position local workspace and independent offline lighting codec](docs/F2088_RESEARCH.md), with all device operations disabled.
+
+F98 Pro now has [independently recovered lighting definitions and offline codecs](docs/F98_RESEARCH.md):20 presets,0–5 brightness/speed, per-key color drafts and effect-specific disabled controls. Existing F98 local profiles retain their assignments/macros during compatible loading. **F98 hardware access remains disabled**; the read/backup/acknowledgment/recovery contract still needs work.
 
 ## Get started
 

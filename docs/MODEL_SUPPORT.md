@@ -31,3 +31,7 @@ No new model may inherit F75 write access merely because its USB ID or packet si
 7. Publish a per-model/per-revision/per-connection compatibility matrix. Expand other brands using the same process.
 
 Version0.5 adds an evidence-bounded model registry, model-specific local profile storage, resource-derived editors and offline S75 packet codecs. Twelve direct official Windows packages have been acquired and statically inspected; see [catalog](DOWNLOAD_CATALOG.md), [evidence](MULTI_MODEL_RESEARCH.md) and [local workspaces](MODEL_WORKSPACES.md). There is still one enabled hardware configuration adapter: original wired ANSI F75. New-model hardware access remains disabled. Bluetooth/dongle support and onboard macros remain separate research tasks. Community testing can supply hardware coverage without every model being owned by the maintainer; absent that testing, label the model researched/offline-tested rather than working.
+
+## Unreleased 0.6
+
+Three F87 variants, F108 and H108 have independently documented experimental read-only adapters. Explicit physical reads verify exact model identity before bounded configuration queries; no physical validation has occurred locally. All new-model writes remain disabled. See [F87](F87_READ_CONTRACT.md) and [F108/H108](G5_READ_CONTRACTS.md). Passive exact USB product-name matching narrows S75/F108Pro/F98Pro discovery candidates only and cannot grant hardware access.

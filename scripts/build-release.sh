@@ -15,9 +15,22 @@ done
 install -m644 packaging/aula-studio.desktop "$stage/share/applications/"
 install -m644 app/src-tauri/icons/icon.png "$stage/share/icons/hicolor/128x128/apps/aula-studio.png"
 install -m644 packaging/70-aula-f75.rules "$stage/share/udev/"
-cp README.md LICENSE "$stage/"
-cp docs/*.md "$stage/docs/"
-cp -r docs/screenshots "$stage/docs/"
+python3 - "$stage" <<'PY'
+import importlib.util, sys
+from pathlib import Path
+root=Path.cwd()
+stage=Path(sys.argv[1]).resolve()
+if not stage.is_relative_to(root/'dist') or (stage/'.git').exists():
+    raise ValueError('Native staging must be an owned project dist/ directory')
+spec=importlib.util.spec_from_file_location('exporter', root/'scripts/prepare-public-release.py')
+exporter=importlib.util.module_from_spec(spec);spec.loader.exec_module(exporter)
+# Keep progress/continuation and stale staging notes out of this build path too.
+exporter.stage_public_docs(stage)
+for name in ['README.md','LICENSE','CHANGELOG.md','SECURITY.md']:
+    (stage/name).write_bytes(exporter.sanitized(name,(root/name).read_bytes()))
+notices,_=exporter.native_notices()
+(stage/'THIRD_PARTY_NOTICES.txt').write_text(notices)
+PY
 archive="dist/aula-studio-${version}-linux-${architecture}.tar.gz"
 tar -C dist -czf "$archive" "aula-studio-${version}-linux-${architecture}"
 python3 - "$archive" "$version" <<'PY'

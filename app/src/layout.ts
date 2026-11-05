@@ -91,6 +91,23 @@ add("←", 80, "ArrowLeft", 13.25, 5.3);
 add("↓", 81, "ArrowDown", 14.25, 5.3);
 add("→", 79, "ArrowRight", 15.25, 5.3);
 export const KEYBOARD = keys;
+export function keyPreviewRect(key: Key) {
+  const functionPositions = [99,139,179,219,272,312,352,392,445,485,525,565];
+  return {
+    x: /^F\d+$/.test(key.label) ? functionPositions[+key.label.slice(1)-1] : 21+key.x*39.5,
+    y: 30+key.y*41,
+    width: key.width*39.5-2,
+    height: 40,
+  };
+}
+export const KEYBOARD_PREVIEW = {
+  width: 679,
+  height: 304,
+  right: Math.max(...KEYBOARD.map(key => {
+    const rect = keyPreviewRect(key);
+    return rect.x + rect.width;
+  })),
+};
 export const CODE_USAGE = Object.fromEntries(
   keys.filter((k) => k.usage !== undefined).map((k) => [k.code, k.usage!]),
 );

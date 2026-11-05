@@ -334,14 +334,30 @@ impl Layer {
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct KeyAction {
+    /// Device record type, not a USB usage-page number: 0 keyboard, 1 mouse, 2 consumer.
     pub page: u8,
-    pub usage: u8,
+    pub usage: u16,
+}
+/// Only the five ordinary button records emitted by OemDrv0049a920.
+pub const SUPPORTED_MOUSE_BUTTONS: [u16; 5] = [1, 2, 3, 4, 5];
+pub fn mouse_action_name(button: u16) -> Option<&'static str> {
+    match button {
+        1 => Some("Left click"),
+        2 => Some("Right click"),
+        3 => Some("Middle click"),
+        4 => Some("Mouse button 4"),
+        5 => Some("Mouse button 5"),
+        _ => None,
+    }
 }
 /// Consumer records explicitly emitted by the supplied OemDrv key converter.
 /// These are application record type2, not USB usage page number2.
-pub const SUPPORTED_MEDIA_USAGES: [u8; 7] = [0xcd, 0xb7, 0xb6, 0xb5, 0xe9, 0xea, 0xe2];
-pub fn media_action_name(usage: u8) -> Option<&'static str> {
+pub const SUPPORTED_MEDIA_USAGES: [u16; 14] = [
+    0x183, 0xcd, 0xe2, 0xb7, 0xb6, 0xb5, 0xe9, 0xea, 0x223, 0x192, 0x18a, 0x194, 0x6f, 0x70,
+];
+pub fn media_action_name(usage: u16) -> Option<&'static str> {
     match usage {
+        0x183 => Some("Media player"),
         0xcd => Some("Play / pause"),
         0xb7 => Some("Stop playback"),
         0xb6 => Some("Previous track"),
@@ -349,6 +365,12 @@ pub fn media_action_name(usage: u8) -> Option<&'static str> {
         0xe9 => Some("Volume up"),
         0xea => Some("Volume down"),
         0xe2 => Some("Mute"),
+        0x223 => Some("Browser home"),
+        0x192 => Some("Calculator"),
+        0x18a => Some("Email reader"),
+        0x194 => Some("File browser"),
+        0x6f => Some("Display brightness up"),
+        0x70 => Some("Display brightness down"),
         _ => None,
     }
 }
@@ -356,9 +378,48 @@ pub fn media_action_name(usage: u8) -> Option<&'static str> {
 mod media_record_tests {
     use super::*;
     #[test]
+    fn native_mouse_records_are_five_exact_single_button_forms() {
+        // Converter0049a920: internal11/13/12/14/15; DWORD little endian.
+        for (button, native) in [
+            (1, 0x10101u32),
+            (2, 0x10201),
+            (3, 0x10301),
+            (4, 0x10401),
+            (5, 0x10501),
+        ] {
+            let action = KeyAction {
+                page: 1,
+                usage: button,
+            };
+            assert_eq!(action.record().unwrap(), native.to_le_bytes());
+            for layer in [Layer::Base, Layer::Fn] {
+                let mut map = Keymap::empty(layer);
+                map.set(9, action).unwrap();
+                assert_eq!(map.get(9).unwrap(), action);
+                assert!(map.matches_action(9, action).unwrap());
+            }
+        }
+        for button in [0, 6, 256, u16::MAX] {
+            assert!(KeyAction {
+                page: 1,
+                usage: button
+            }
+            .record()
+            .is_err());
+        }
+        for record in [[1, 1, 2, 50], [1, 2, 0, 0], [1, 3, 1, 10]] {
+            let mut raw = Keymap::empty(Layer::Base).as_bytes().to_vec();
+            raw[44..48].copy_from_slice(&record);
+            let map = Keymap::parse(&raw).unwrap();
+            assert!(!map.matches_action(9, map.get(9).unwrap()).unwrap());
+            assert_eq!(&map.as_bytes()[44..48], &record);
+        }
+    }
+    #[test]
     fn official_converter_constants_match_media_records() {
         // OemDrv49a920 return DWORDs, in little-endian byte order.
         for (usage, native) in [
+            (0x183, 0x83010002u32),
             (0xcd, 0xcd000002u32),
             (0xb7, 0xb7000002),
             (0xb6, 0xb6000002),
@@ -366,6 +427,12 @@ mod media_record_tests {
             (0xe9, 0xe9000002),
             (0xea, 0xea000002),
             (0xe2, 0xe2000002),
+            (0x223, 0x23020002),
+            (0x192, 0x92010002),
+            (0x18a, 0x8a010002),
+            (0x194, 0x94010002),
+            (0x6f, 0x6f000002),
+            (0x70, 0x70000002),
         ] {
             assert_eq!(
                 KeyAction { page: 2, usage }.record().unwrap(),
@@ -373,8 +440,27 @@ mod media_record_tests {
             );
             assert!(SUPPORTED_MEDIA_USAGES.contains(&usage));
             assert!(media_action_name(usage).is_some());
+            for layer in [Layer::Base, Layer::Fn] {
+                let mut map = Keymap::empty(layer);
+                map.set(9, KeyAction { page: 2, usage }).unwrap();
+                assert_eq!(&map.as_bytes()[44..48], &native.to_le_bytes());
+                assert_eq!(map.get(9).unwrap(), KeyAction { page: 2, usage });
+                assert!(map.matches_action(9, KeyAction { page: 2, usage }).unwrap());
+            }
         }
         assert!(media_action_name(0xb0).is_none());
+    }
+    #[test]
+    fn wide_usages_cannot_truncate_to_supported_actions() {
+        for (page, usage) in [(0, 0x104), (0, 0x1e0), (2, 0x1cd), (2, 0xffff), (2, 0)] {
+            assert!(KeyAction { page, usage }.record().is_err());
+        }
+        assert!(KeyAction {
+            page: 2,
+            usage: 0xcd
+        }
+        .record()
+        .is_ok());
     }
 }
 impl KeyAction {
@@ -382,15 +468,21 @@ impl KeyAction {
         self.validate()?;
         Ok(if self.page == 0 && (0xe0..=0xe7).contains(&self.usage) {
             [0, 1u8 << (self.usage - 0xe0), 0, 0]
+        } else if self.page == 1 {
+            [1, self.usage as u8, 1, 0]
         } else {
-            [self.page, 0, 0, self.usage]
+            let [high, low] = self.usage.to_be_bytes();
+            [self.page, 0, high, low]
         })
     }
     pub fn validate(self) -> Result<(), ProtocolError> {
-        if self.page == 0 || self.page == 2 {
+        if (self.page == 0 && self.usage <= 255)
+            || (self.page == 1 && mouse_action_name(self.usage).is_some())
+            || (self.page == 2 && media_action_name(self.usage).is_some())
+        {
             Ok(())
         } else {
-            Err(ProtocolError::Unsupported("key action page"))
+            Err(ProtocolError::Unsupported("key action page or usage"))
         }
     }
 }
@@ -459,14 +551,16 @@ impl Keymap {
         };
         let o = 8 + 4 * index;
         let modifier = self.0[o + 1];
-        let usage = if self.0[o] == 0
+        let usage = if self.0[o] == 1 {
+            u16::from(modifier)
+        } else if self.0[o] == 0
             && modifier.is_power_of_two()
             && self.0[o + 2] == 0
             && self.0[o + 3] == 0
         {
-            0xe0 + modifier.trailing_zeros() as u8
+            0xe0 + modifier.trailing_zeros() as u16
         } else {
-            self.0[o + 3]
+            u16::from_be_bytes([self.0[o + 2], self.0[o + 3]])
         };
         Ok(KeyAction {
             page: self.0[o],
@@ -832,7 +926,7 @@ mod tests {
     fn layer_and_action_validation() {
         let mut k = Keymap::empty(Layer::Fn);
         assert_eq!(k.layer(), Layer::Fn);
-        assert!(k.set(1, KeyAction { page: 1, usage: 4 }).is_err());
+        assert!(k.set(1, KeyAction { page: 1, usage: 6 }).is_err());
         let mut bytes = *k.as_bytes();
         bytes[2] = 2;
         assert!(Keymap::parse(&bytes).is_err());

@@ -53,3 +53,15 @@ Remaining: exact keyboard art/shading, font metrics, detailed remapping action p
 
 
 Additional verified icon correction: the earlier UI wrongly assigned navi7 (cloud) to Per-Key RGB and navi5 (RGB/ring) to Macros. Direct comparison of supplied sprites with the public original lighting screen identifies navi5 for RGB and navi4 for Macros; these are corrected, and unused account/cloud sprites6/7 are no longer read. CFG EnableYun=0 separately supports excluding the cloud entry from the supplied original UI.
+
+## Macro sidebar follow-up — unreleased0.6
+
+REA native constructor0043c420 establishes local tree width218, tree top70,28-pixel list rows and six18-pixel icons at8-pixel gaps. The toolbar now follows its recovered left-to-right Export/Import/Rename/Copy/Delete/New order and performs the real local operations. Normal original icon PNGs may be read only from the existing bounded private extraction; independent SVGs ship instead. Key edits, reorder/insertion/duplicate and100-event paging are functional. A native click-area regression was caught and fixed before handoff. Parent-coordinate/font/dialog fidelity and the separate46-pixel original event-tree presentation remain incomplete; this is not a claim of full visual parity. See [macro evidence](MACRO_FORMAT.md).
+
+## Layer navigation follow-up — unreleased0.6
+
+The native CKeyDlg constructor is0041ebd0 (template103), initialized by0041f420 and laid out by0041f730. GetRuntimeClass0041ebc0 was initially a misleading factory lead. Static construction establishes85×45 layer buttons with1px gaps, ending10px above the keyboard. FnAlign defaults to1 in parser00411830 (assembly004123cd–004123ee), placing the last button at the rightmost visible key. Default/FN1 now use this geometry with actual existing layer navigation; unsupported FN2/Tap are not offered. Keyboard rectangles are centralized so alignment follows the independently drawn ANSI layout. The conflicting inherited10px keyboard margin is removed.
+
+Native WebKit tests verify scaled dimensions, right alignment, the10px gap, protected source controls, working layers and unobstructed hit targets while a success notification is open. Notices now occupy spare header space. F75 regression, all ten model workspaces and eight startup cases pass for this change; no physical write occurred. MS Shell Dlg is the native default font alias (00457e90); runtime Windows substitution and exact pixel matching remain unverified. Detailed action-picker reconstruction remains unfinished.
+
+Primary evidence: constructor ev_6bcb12574142649e21a78c411e5e00a6c81bc0f55211c392fa7ae9cab3aa7b15; layout ev_6e96c8c337234ccafce5f1ef377491eb00f5cd7c38bea5b0d7f73369fcebc14d; assembly ev_c1b783ea9c6931a110e3252b81827c4c0d7a872e4db74888d3833aa46d8b72bc; alignment parser assembly ev_0ec019e25d467d73d67df30b78e30fa90269947c4f5ed7442e7963a65d24cca9. Original decompiler output and artwork remain private; shipping code is independently implemented.

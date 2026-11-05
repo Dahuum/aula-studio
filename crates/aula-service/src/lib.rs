@@ -1,4 +1,5 @@
 //! Versioned local profiles. Saving a profile never writes a keyboard.
+pub mod macro_preview;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -49,9 +50,13 @@ pub struct Profile {
     #[serde(default)]
     pub fn_layer: BTreeMap<String, u16>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub consumer_keymap: BTreeMap<String, u8>,
+    pub consumer_keymap: BTreeMap<String, u16>,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub consumer_fn_layer: BTreeMap<String, u8>,
+    pub consumer_fn_layer: BTreeMap<String, u16>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub mouse_keymap: BTreeMap<String, u16>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub mouse_fn_layer: BTreeMap<String, u16>,
     #[serde(default)]
     pub macros: Vec<Macro>,
     pub updated_at: String,
@@ -105,6 +110,8 @@ impl Profile {
             .chain(self.fn_layer.keys())
             .chain(self.consumer_keymap.keys())
             .chain(self.consumer_fn_layer.keys())
+            .chain(self.mouse_keymap.keys())
+            .chain(self.mouse_fn_layer.keys())
         {
             if key
                 .parse::<u16>()
@@ -123,12 +130,16 @@ impl Profile {
         {
             return Err("Only keyboard-page HID usages 1..255 are supported".into());
         }
-        for (keyboard, media) in [
-            (&self.keymap, &self.consumer_keymap),
-            (&self.fn_layer, &self.consumer_fn_layer),
+        for (keyboard, media, mouse) in [
+            (&self.keymap, &self.consumer_keymap, &self.mouse_keymap),
+            (
+                &self.fn_layer,
+                &self.consumer_fn_layer,
+                &self.mouse_fn_layer,
+            ),
         ] {
             let mut seen = BTreeSet::new();
-            for source in keyboard.keys().chain(media.keys()) {
+            for source in keyboard.keys().chain(media.keys()).chain(mouse.keys()) {
                 // Numeric aliases (e.g.04 and4) must not create duplicate edits.
                 let usage = source.parse::<u16>().map_err(|_| "Invalid source key")?;
                 if !seen.insert(usage) {
@@ -141,6 +152,12 @@ impl Profile {
             {
                 return Err("Unsupported media action".into());
             }
+            if mouse
+                .values()
+                .any(|v| aula_protocol::mouse_action_name(*v).is_none())
+            {
+                return Err("Unsupported mouse button".into());
+            }
         }
         if self
             .sleep_seconds
@@ -148,40 +165,44 @@ impl Profile {
         {
             return Err("Unsupported sleep time".into());
         }
-        if self.macros.len() > 64 {
-            return Err("Too many local macros".into());
-        }
-        for m in &self.macros {
-            if !valid_id(&m.id)
-                || m.name.trim().is_empty()
-                || m.name.len() > 120
-                || m.events.len() > 2048
-            {
-                return Err("Invalid macro or too many events".into());
-            }
-            let mut held = BTreeSet::new();
-            for e in &m.events {
-                match e.kind.as_str() {
-                    "down" | "up"
-                        if e.key.is_some_and(|k| (4..=231).contains(&k)) && e.ms.is_none() =>
-                    {
-                        let key = e.key.unwrap();
-                        if (e.kind == "down" && !held.insert(key))
-                            || (e.kind == "up" && !held.remove(&key))
-                        {
-                            return Err("Macro presses and releases must be balanced".into());
-                        }
-                    }
-                    "delay" if e.ms.is_some_and(|ms| ms <= 60000) && e.key.is_none() => (),
-                    _ => return Err("Invalid macro event".into()),
-                }
-            }
-            if !held.is_empty() {
-                return Err("Release all pressed keys before saving a macro".into());
-            }
-        }
+        validate_macros(&self.macros)?;
         Ok(())
     }
+}
+pub fn validate_macros(macros: &[Macro]) -> Result<()> {
+    if macros.len() > 64 {
+        return Err("Too many local macros".into());
+    }
+    for m in macros {
+        if !valid_id(&m.id)
+            || m.name.trim().is_empty()
+            || m.name.len() > 120
+            || m.events.len() > 2048
+        {
+            return Err("Invalid macro or too many events".into());
+        }
+        let mut held = BTreeSet::new();
+        for e in &m.events {
+            match e.kind.as_str() {
+                "down" | "up"
+                    if e.key.is_some_and(|k| (4..=231).contains(&k)) && e.ms.is_none() =>
+                {
+                    let key = e.key.unwrap();
+                    if (e.kind == "down" && !held.insert(key))
+                        || (e.kind == "up" && !held.remove(&key))
+                    {
+                        return Err("Macro presses and releases must be balanced".into());
+                    }
+                }
+                "delay" if e.ms.is_some_and(|ms| ms <= 60000) && e.key.is_none() => (),
+                _ => return Err("Invalid macro event".into()),
+            }
+        }
+        if !held.is_empty() {
+            return Err("Release all pressed keys before saving a macro".into());
+        }
+    }
+    Ok(())
 }
 pub fn decode_profile(json: &str) -> Result<Profile> {
     if json.len() > 512 * 1024 {
@@ -462,6 +483,52 @@ mod tests {
         p.keymap.clear();
         p.consumer_keymap.insert("5".into(), 0xb0);
         assert!(p.validate().is_err());
+    }
+    #[test]
+    fn all_native_media_usages_roundtrip_without_narrowing_or_rewriting() {
+        let mut p = profile();
+        for (i, usage) in aula_protocol::SUPPORTED_MEDIA_USAGES
+            .into_iter()
+            .enumerate()
+        {
+            p.consumer_keymap.insert((4 + i).to_string(), usage);
+            p.consumer_fn_layer.insert((4 + i).to_string(), usage);
+        }
+        let encoded = serde_json::to_string(&p).unwrap();
+        let decoded = decode_profile(&encoded).unwrap();
+        assert_eq!(decoded, p);
+        assert_eq!(decoded.schema_version, 1);
+        for invalid in [0x1cd, 0x123, 0xffff] {
+            p.consumer_keymap.insert("4".into(), invalid);
+            assert!(p.validate().is_err());
+        }
+    }
+    #[test]
+    fn mouse_maps_roundtrip_and_conflicts_reject_in_each_layer() {
+        let mut p = profile();
+        assert!(!serde_json::to_string(&p).unwrap().contains("mouse_keymap"));
+        for button in 1..=5 {
+            p.mouse_keymap.insert((button + 3).to_string(), button);
+            p.mouse_fn_layer.insert((button + 3).to_string(), button);
+        }
+        assert_eq!(
+            decode_profile(&serde_json::to_string(&p).unwrap()).unwrap(),
+            p
+        );
+        for invalid in [0, 6, 256] {
+            let mut bad = p.clone();
+            bad.mouse_fn_layer.insert("4".into(), invalid);
+            assert!(bad.validate().is_err());
+        }
+        for media in [false, true] {
+            let mut bad = p.clone();
+            if media {
+                bad.consumer_keymap.insert("04".into(), 0xcd);
+            } else {
+                bad.keymap.insert("04".into(), 5);
+            }
+            assert!(bad.validate().is_err());
+        }
     }
     #[test]
     fn preferences_use_config_location_and_preserve_legacy_on_migration() {

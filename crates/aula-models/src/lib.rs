@@ -7,7 +7,10 @@ use std::{
     sync::OnceLock,
 };
 
+pub mod f2088;
+pub mod f98;
 pub mod g5;
+pub mod g5_capture;
 pub mod sonix;
 
 fn atomic_write(path: &Path, data: &[u8]) -> Result<()> {
@@ -31,6 +34,8 @@ pub struct UsbIdentity {
     pub product_id: u16,
     pub interface_number: Option<i32>,
     pub connection: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub product_name: Option<String>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -51,6 +56,15 @@ pub struct Key {
 pub struct Effect {
     pub id: u16,
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub controls: Option<EffectControls>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct EffectControls {
+    pub brightness: bool,
+    pub speed: bool,
+    pub color: bool,
 }
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -94,6 +108,13 @@ impl Model {
             || self.keys.len() > 256
         {
             return Err("Invalid model identity or layout bounds".into());
+        }
+        if self.usb.iter().any(|u| {
+            u.product_name
+                .as_ref()
+                .is_some_and(|s| s.is_empty() || s.len() > 256)
+        }) {
+            return Err("Invalid configured USB product string".into());
         }
         let mut ids = BTreeSet::new();
         for k in &self.keys {
@@ -173,6 +194,35 @@ pub fn usb_candidates(vid: u16, pid: u16, interface: i32) -> Result<Vec<&'static
         })
         .collect())
 }
+/// Prioritize an exact configured product string when available. This is only
+/// metadata matching, never revision attestation or hardware access permission.
+/// Unknown strings preserve all USB candidates instead of guessing a model.
+pub fn usb_candidates_with_product(
+    vid: u16,
+    pid: u16,
+    interface: i32,
+    product: &str,
+) -> Result<(Vec<&'static Model>, bool)> {
+    let candidates = usb_candidates(vid, pid, interface)?;
+    let named: Vec<_> = candidates
+        .iter()
+        .copied()
+        .filter(|m| {
+            m.usb.iter().any(|u| {
+                u.vendor_id == vid
+                    && u.product_id == pid
+                    && u.interface_number.is_none_or(|i| i == interface)
+                    && u.product_name.as_deref() == Some(product)
+                    && !product.is_empty()
+            })
+        })
+        .collect();
+    if named.is_empty() {
+        Ok((candidates, false))
+    } else {
+        Ok((named, true))
+    }
+}
 pub fn identity_candidates(identity: [u8; 6]) -> Result<Vec<&'static Model>> {
     Ok(registry()?
         .iter()
@@ -198,6 +248,16 @@ pub struct LightingDraft {
     pub speed: u8,
     pub color: [u8; 3],
 }
+impl LightingDraft {
+    fn for_model(model: &Model) -> Option<Self> {
+        model.lighting.as_ref().map(|lighting| Self {
+            effect: lighting.default_effect,
+            brightness: lighting.brightness_max,
+            speed: lighting.speed_max / 2,
+            color: [255, 96, 32],
+        })
+    }
+}
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Draft {
@@ -222,12 +282,7 @@ impl Draft {
             id: new_id(),
             name: name.into(),
             model_id: model_id.into(),
-            lighting: m.lighting.as_ref().map(|l| LightingDraft {
-                effect: l.default_effect,
-                brightness: l.brightness_max,
-                speed: l.speed_max / 2,
-                color: [255, 96, 32],
-            }),
+            lighting: LightingDraft::for_model(m),
             per_key: BTreeMap::new(),
             assignments: BTreeMap::new(),
             fn_assignments: BTreeMap::new(),
@@ -285,30 +340,7 @@ impl Draft {
         if self.macros.iter().any(|m| !macro_ids.insert(&m.id)) {
             return Err("Duplicate local macro id".into());
         }
-        // Share the existing bounded, balanced local-macro validation. The
-        // legacy F75 object exists only in memory; no profile or HID is applied.
-        let legacy = aula_service::Profile {
-            schema_version: 1,
-            id: self.id.clone(),
-            name: "Local macro validation".into(),
-            lighting: aula_service::Lighting {
-                effect: 1,
-                brightness: 0,
-                speed: 0,
-                color: [0; 3],
-                direction: 0,
-                colorful: false,
-            },
-            per_key: BTreeMap::new(),
-            keymap: BTreeMap::new(),
-            fn_layer: BTreeMap::new(),
-            consumer_keymap: BTreeMap::new(),
-            consumer_fn_layer: BTreeMap::new(),
-            macros: self.macros.clone(),
-            updated_at: String::new(),
-            sleep_seconds: None,
-        };
-        legacy.validate()?;
+        aula_service::validate_macros(&self.macros)?;
         Ok(())
     }
 }
@@ -316,7 +348,13 @@ pub fn decode_draft(text: &str) -> Result<Draft> {
     if text.len() > 512 * 1024 {
         return Err("Model profile exceeds512 KiB".into());
     }
-    let p: Draft = serde_json::from_str(text).map_err(|e| e.to_string())?;
+    let mut p: Draft = serde_json::from_str(text).map_err(|e| e.to_string())?;
+    // Earlier schema1 F98 workspaces had no lighting definitions. Keep their
+    // identity/assignments/macros and add only the newly available local draft.
+    // Loading never rewrites the saved file or configures a device.
+    if p.schema_version == 1 && p.model_id == "f98-pro" && p.lighting.is_none() {
+        p.lighting = LightingDraft::for_model(model("f98-pro")?);
+    }
     p.validate()?;
     Ok(p)
 }
@@ -410,6 +448,89 @@ impl Store {
 mod tests {
     use super::*;
     #[test]
+    fn f98_lighting_definitions_are_model_specific_and_do_not_grant_g5_access() {
+        let model = model("f98-pro").unwrap();
+        let lighting = model.lighting.as_ref().unwrap();
+        assert_eq!((lighting.brightness_max, lighting.speed_max), (5, 5));
+        assert_eq!(
+            lighting.effects.iter().map(|e| e.id).collect::<Vec<_>>(),
+            (0..20).collect::<Vec<_>>()
+        );
+        assert!(lighting.per_key);
+        assert!(!lighting.effects[0].controls.as_ref().unwrap().brightness);
+        assert!(!lighting.effects[1].controls.as_ref().unwrap().speed);
+        assert!(!lighting.effects[6].controls.as_ref().unwrap().color);
+        assert!(!lighting.effects[8].controls.as_ref().unwrap().color);
+        assert!(model.model_identity.is_none());
+        assert!(g5_capture::expected_identity("f98-pro").is_err());
+        let mut draft = Draft::new("f98-pro", "New lighting").unwrap();
+        for (effect, brightness, speed) in [(20, 5, 2), (1, 6, 2), (1, 5, 6)] {
+            let value = draft.lighting.as_mut().unwrap();
+            value.effect = effect;
+            value.brightness = brightness;
+            value.speed = speed;
+            assert!(draft.validate().is_err());
+        }
+    }
+    #[test]
+    fn legacy_f98_lighting_migration_preserves_work_without_rewriting_the_file() {
+        let root = std::env::temp_dir().join(format!("aula-f98-migration-{}", new_id()));
+        let store = Store::new(&root);
+        let mut old = Draft::new("f98-pro", "Existing F98 work").unwrap();
+        old.lighting = None;
+        let source = model("f98-pro")
+            .unwrap()
+            .keys
+            .iter()
+            .find(|k| k.usage == Some(4))
+            .unwrap();
+        old.assignments
+            .insert(source.id.clone(), Assignment::Keyboard(5));
+        old.macros.push(Macro {
+            id: "macro1".into(),
+            name: "Existing macro".into(),
+            events: vec![
+                aula_service::MacroEvent {
+                    kind: "down".into(),
+                    key: Some(4),
+                    ms: None,
+                },
+                aula_service::MacroEvent {
+                    kind: "up".into(),
+                    key: Some(4),
+                    ms: None,
+                },
+            ],
+        });
+        let original = serde_json::to_vec(&old).unwrap();
+        std::fs::create_dir_all(&store.0).unwrap();
+        let file = store.path(&old.id).unwrap();
+        std::fs::write(&file, &original).unwrap();
+        let migrated = store.get(&old.id).unwrap();
+        assert_eq!(migrated.id, old.id);
+        assert_eq!(migrated.name, old.name);
+        assert_eq!(migrated.assignments, old.assignments);
+        assert_eq!(migrated.macros, old.macros);
+        assert_eq!(
+            migrated.lighting,
+            LightingDraft::for_model(model("f98-pro").unwrap())
+        );
+        assert_eq!(std::fs::read(&file).unwrap(), original);
+        store.save(&migrated).unwrap();
+        assert_ne!(std::fs::read(&file).unwrap(), original);
+        assert_eq!(store.get(&old.id).unwrap(), migrated);
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn lighting_migration_never_guesses_another_model_or_schema() {
+        let mut draft = Draft::new("f87", "No guessed migration").unwrap();
+        draft.lighting = None;
+        assert!(decode_draft(&serde_json::to_string(&draft).unwrap()).is_err());
+        draft.model_id = "f98-pro".into();
+        draft.schema_version = 2;
+        assert!(decode_draft(&serde_json::to_string(&draft).unwrap()).is_err());
+    }
+    #[test]
     fn catalogue_is_valid_and_shared_usb_ids_remain_ambiguous() {
         let models = registry().unwrap();
         assert!(models.len() >= 10);
@@ -421,6 +542,48 @@ mod tests {
             .unwrap()
             .iter()
             .all(|m| m.id == "f87"));
+    }
+    #[test]
+    fn f2088_partial_resource_layout_never_inherits_rgb_fn_or_g5_access() {
+        let m = model("f2088").unwrap();
+        assert_eq!(m.keys.len(), 103);
+        assert!(m
+            .keys
+            .iter()
+            .all(|k| k.matrix_index.is_none() && k.light_index.is_none()));
+        assert!(!m.fn_layer && m.lighting.is_none() && m.model_identity.is_none());
+        assert!(!m.keys.iter().any(|k| k.usage == Some(231)));
+        assert!(g5_capture::expected_identity("f2088").is_err());
+        let candidates = usb_candidates(0x1a2c, 0x9ef4, 1).unwrap();
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].id, "f2088");
+        let mut draft = Draft::new("f2088", "Partial layout").unwrap();
+        draft
+            .assignments
+            .insert("key-4".into(), Assignment::Keyboard(5));
+        draft.validate().unwrap();
+        draft.per_key.insert("key-4".into(), [1, 2, 3]);
+        assert!(draft.validate().is_err());
+    }
+    #[test]
+    fn configured_product_matching_is_exact_and_never_implies_protocol_support() {
+        let (s75, matched) = usb_candidates_with_product(0x0c45, 0x800a, 0, "AULA-S75Pro").unwrap();
+        assert!(matched);
+        assert_eq!(s75.len(), 1);
+        assert_eq!(s75[0].id, "s75-pro");
+        let (f108, matched) =
+            usb_candidates_with_product(0x0c45, 0x800a, 0, "AULA F108Pro").unwrap();
+        assert!(matched);
+        assert_eq!(f108[0].id, "f108-pro");
+        for name in ["aula-s75pro", "AULA-S75Pro ", "unknown", ""] {
+            let (all, matched) = usb_candidates_with_product(0x0c45, 0x800a, 0, name).unwrap();
+            assert!(!matched);
+            assert!(all.len() >= 3);
+        }
+        let (all, matched) =
+            usb_candidates_with_product(0x258a, 0x010c, 1, "USB Gaming Keyboard").unwrap();
+        assert!(!matched);
+        assert!(all.len() > 1);
     }
     #[test]
     fn profiles_bind_to_model_and_reject_cross_model_and_protected_keys() {

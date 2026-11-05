@@ -1,5 +1,7 @@
 # Model workspaces — 0.5.0
 
+The table below records the published0.5 scope. Unreleased0.6 adds an explicitly partial103-position F2088 workspace and [F98 Pro lighting drafts](F98_RESEARCH.md):20 presets,0–5 sliders, per-key colors and per-effect disabled states, preserving older local profiles. Neither model gains physical access. Five exact G5 variants separately gain experimental read-only captures as documented in [G5_READ_CONTRACTS.md](G5_READ_CONTRACTS.md); those reads are not new-model write support.
+
 Open **More views → Device library** in the native application. This is a local editor for additional resource-derived layouts, separate from the F75 hardware controller. It works without owning those keyboards. It does not configure them.
 
 ## Availability
