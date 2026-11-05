@@ -34,12 +34,18 @@ it("persists custom colors independently and enforces the ten-slot limit",async(
 });
 it("exposes original Default/FN1 navigation and protects the actual Fn source",async()=>{
   await open();fireEvent.click(screen.getByRole("button",{name:"Key Remapping"}));
+  const layers=screen.getByRole("group",{name:"Keyboard layer"});
+  expect(layers.closest(".original-keyboard-panel")).toBeTruthy();
+  expect(screen.getByRole("button",{name:"Default layer"}).getAttribute("aria-pressed")).toBe("true");
   fireEvent.click(screen.getByRole("button",{name:"Fn"}));
   expect((screen.getByRole("button",{name:"Assign locally"}) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.click(screen.getByRole("button",{name:"Ctrl right"}));
   expect((screen.getByRole("button",{name:"Assign locally"}) as HTMLButtonElement).disabled).toBe(false);
   fireEvent.click(screen.getByRole("button",{name:"Fn Layers"}));
   expect(document.querySelector('.original-app')?.getAttribute('data-page')).toBe("Fn Layers");
+  expect(screen.getByRole("button",{name:"Fn Layers"}).getAttribute("aria-pressed")).toBe("true");
+  fireEvent.click(screen.getByRole("button",{name:"Default layer"}));
+  expect(document.querySelector('.original-app')?.getAttribute('data-page')).toBe("Key Remapping");
 });
 it("keeps Linux diagnostics accessible from the additional-views menu",async()=>{
   await open();fireEvent.click(screen.getByRole("button",{name:"More views"}));fireEvent.click(screen.getByRole("button",{name:"Diagnostics"}));

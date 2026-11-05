@@ -15,7 +15,7 @@ The source was the [official AULA download page](https://www.aulagaming.com/page
 | Hosted file-service pages | 6 | Excluded; five distinct URLs because two F99 cards share one link |
 | Standalone firmware packages | 2 | Excluded |
 
-The 12 downloads total **223,810,740 bytes**. Acquisition used HTTPS, reviewed destination hosts, size/time bounds, atomic temporary files, SHA256 manifests and non-executable file permissions. Extraction preflight bounded member counts, paths and expansion. Ten Inno packages were extracted; Hub was recovered through ZIP → NSIS → inner archive → Electron ASAR. F2088 was not recognized by the available Inno/7z extraction paths; PE resource inspection alone does not reveal its configuration protocol. Bundled firmware tools were indexed, never installed or run.
+The 12 downloads total **223,810,740 bytes**. Acquisition used HTTPS, reviewed destination hosts, size/time bounds, atomic temporary files, SHA256 manifests and non-executable file permissions. Extraction preflight bounded member counts, paths and expansion. Ten Inno packages were extracted; Hub was recovered through ZIP → NSIS → inner archive → Electron ASAR. F2088 was initially unrecognized by the available Inno/7z extraction paths. Unreleased0.6 subsequently recovered its Advanced Installer containers by correcting their first512-byte complement, extracted them without execution and independently traced its eight-byte normal lighting protocol; see [F2088 follow-up](F2088_RESEARCH.md). Bundled firmware tools were indexed, never installed or run.
 
 Exact links, package hashes and exclusion reasons are recorded in [DOWNLOAD_CATALOG.md](DOWNLOAD_CATALOG.md) and [download-catalog.json](../data/download-catalog.json). This is one captured catalog, not an inventory of every AULA product ever sold. The F75 Pro hosted filename resembles the supplied F75 installer name; this is catalog ambiguity, not Pro compatibility evidence.
 
@@ -196,3 +196,8 @@ Focused REA semantic traces for literal values 130, 519 and 378 returned **parti
 ## Remaining validation boundary
 
 No additional model is **VERIFIED ON HARDWARE** by this research. Catalog/resource metadata, static encoders and mock tests must remain separate from working-device claims. Remaining work includes model/revision discrimination, descriptor confirmation, exact response validation, complete readable backups, unknown-field preservation, macro bounds and recovery, and separately authorized physical validation. Wireless configuration does not follow from wired findings.
+
+
+## F98 Pro follow-up — unreleased0.6
+
+[Independent executable/DLL analysis](F98_RESEARCH.md) establishes the F98 RGB branch,20 presets,0–5 slider bounds, scalar RGB versus per-key BGR and nine-page data format. Original code now supplies offline scalar/per-key encoders and local lighting/per-key drafts with per-effect controls; legacy schema1 lighting-null profiles load without losing assignments/macros or rewriting storage. This extends the95-position local editor, not hardware compatibility. Shared0c45:800a cannot select a safe transport. Native initial read length, acknowledgment, identity/full backup and recovery remain unresolved; no F98 hardware operation is enabled.

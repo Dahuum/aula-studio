@@ -3,6 +3,7 @@ from pathlib import Path
 import unittest
 import tempfile
 import json
+import struct
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -53,5 +54,29 @@ class CatalogSafety(unittest.TestCase):
         parser=extract.DeviceModes()
         parser.feed('<config><mode vid="0C45" pid="800A" hid_interface="VID_0C45&PID_800A&MI_00"/></config>')
         self.assertEqual(parser.modes,[{'element':'mode','vid':'0C45','pid':'800A','hid_interface':'VID_0C45&PID_800A&MI_00'}])
+
+class AdvancedInstallerSafety(unittest.TestCase):
+    @staticmethod
+    def fixture(name='MainFeature.cab'):
+        data=b'MSCF'+b'\0'*508+b'payload remains unchanged'
+        carrier=b'MZ'+b'\0'*62+bytes(v^255 for v in data[:512])+data[512:]
+        record=struct.pack('<5I',7,2,len(data),64,len(name))+name.encode('utf-16-le')
+        return carrier+record+b'ADVINSTSFX',data
+    def test_only_prefix512_is_decoded_and_metadata_is_bound(self):
+        carrier,expected=self.fixture()
+        decoded,record=extract.advanced_container(carrier,'MainFeature.cab')
+        self.assertEqual(decoded,expected)
+        self.assertEqual(record['offset'],64)
+        self.assertEqual(record['bytes'],len(expected))
+        self.assertEqual(record['encoding'],'first512_bytes_complement_ff')
+    def test_bad_bounds_encoding_and_unknown_names_are_rejected(self):
+        carrier,_=self.fixture()
+        for invalid in [carrier[:-1],b'ZZ'+carrier[2:]]:
+            with self.assertRaises(ValueError):extract.advanced_container(invalid,'MainFeature.cab')
+        with self.assertRaises(ValueError):extract.advanced_container(carrier,'../outside.cab')
+        index=carrier.rfind('MainFeature.cab'.encode('utf-16-le'))
+        for field,value in [(1,3),(2,0xffffffff),(3,0xffffff00),(4,99)]:
+            bad=bytearray(carrier);struct.pack_into('<I',bad,index-20+field*4,value)
+            with self.assertRaises(ValueError):extract.advanced_container(bytes(bad),'MainFeature.cab')
 
 if __name__=='__main__':unittest.main()

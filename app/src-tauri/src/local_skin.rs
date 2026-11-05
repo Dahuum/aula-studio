@@ -58,6 +58,14 @@ pub fn assets() -> Value {
                 images.insert(key.into(), json!(data));
             }
         }
+        for name in ["new", "del", "copy", "rename", "import", "export"] {
+            if let Some(data) = png(
+                &root.join(format!("skins/icon18x18/{name}_nr.png")),
+                (18, 18),
+            ) {
+                images.insert(format!("macro_{name}_nr"), json!(data));
+            }
+        }
         for id in [1, 2, 3, 4, 5] {
             for state in ["nr", "dn"] {
                 if let Some(data) = png(

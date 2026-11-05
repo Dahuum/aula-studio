@@ -5,6 +5,10 @@ if [[ ${AULA_CONTAINER_PACKAGE_TEST:-} != 1 || ! -f /.dockerenv ]]; then
   echo 'Refusing package installation outside an explicit disposable test container.' >&2
   exit 1
 fi
+if [[ ! ${AULA_EXPECTED_VERSION:-} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo 'Set AULA_EXPECTED_VERSION to the exact reviewed package version.' >&2
+  exit 1
+fi
 trap 'cat /tmp/aula-smoke.log 2>/dev/null || true' EXIT
 case "$1" in
  deb)
@@ -25,10 +29,10 @@ else
 fi
 runuser -u "$aula_test_user" -- env AULA_DISABLE_HARDWARE_WRITES=1 aula diagnostics > /tmp/diagnostics.json
 python3 - <<'PY'
-import json
+import json,os
 v=json.load(open('/tmp/diagnostics.json'))
 assert v['hardware_writes_enabled'] is False
-assert v['version']=='0.5.0'
+assert v['version']==os.environ['AULA_EXPECTED_VERSION']
 PY
 # This container has no USB devices, host display/home mounts or external page.
 # WebKit's extra namespace sandbox cannot start under standard Docker seccomp;

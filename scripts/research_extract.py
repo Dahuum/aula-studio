@@ -12,6 +12,7 @@ import os
 from pathlib import Path, PurePosixPath
 import re
 import stat
+import struct
 import shutil
 import subprocess
 import zipfile
@@ -108,6 +109,66 @@ def seven_inventory(source, log):
     if sum(int(r.get('Size') or 0) for r in records)>MAX_EXPANDED:
         raise ValueError('Nested archive expansion cap')
     return records
+
+
+def advanced_container(source_bytes, name):
+    """Decode one explicitly named F2088 Advanced Installer container.
+
+    Its trailer records the length/offset; flag2 complements only the first512
+    bytes. This is static byte decoding, never bootstrapper execution.
+    """
+    if len(source_bytes) > 64*1024**2 or not source_bytes.startswith(b'MZ') or not source_bytes.endswith(b'ADVINSTSFX'):
+        raise ValueError('Expected bounded Advanced Installer artifact')
+    if name not in {'ShinetekTools.msi','MainFeature.cab','English.cab','ChineseSimplified.cab'}:
+        raise ValueError('Container name is not allowlisted')
+    token=name.encode('utf-16-le')
+    index=source_bytes.rfind(token,max(0,len(source_bytes)-65536))
+    if index < 20:
+        raise ValueError('Named container table record absent')
+    flags,encoding,size,offset,length=struct.unpack_from('<5I',source_bytes,index-20)
+    if encoding != 2 or length != len(name) or size < 512 or size > 32*1024**2 or offset < 64 or offset+size > index-20:
+        raise ValueError('Invalid container bounds/encoding')
+    raw=source_bytes[offset:offset+size]
+    decoded=bytes(value ^ 255 for value in raw[:512])+raw[512:]
+    signature=bytes.fromhex('d0cf11e0a1b11ae1') if name.endswith('.msi') else b'MSCF'
+    if not decoded.startswith(signature):
+        raise ValueError('Decoded container signature mismatch')
+    return decoded, {'container':name,'offset':offset,'bytes':size,'table_offset':index-20,
+                     'encoding':'first512_bytes_complement_ff','sha256':hashlib.sha256(decoded).hexdigest()}
+
+
+def f2088_extract(source, base):
+    source,base=source.resolve(),base.resolve()
+    if not source.is_relative_to(ROOT/"analysis") or not base.is_relative_to(ROOT/"analysis"):
+        raise ValueError("F2088 research paths must stay under project analysis")
+    if digest(source) != '8731252ed943e177d659558aef0f0a091a1f630f474abfb35da9459b5b0ed3ee':
+        raise ValueError('F2088 installer differs from the investigated artifact')
+    payload=source.read_bytes()
+    containers=base/'decoded-containers/f2088';containers.mkdir(parents=True,exist_ok=True)
+    recovered=[]
+    for name in ['ShinetekTools.msi','MainFeature.cab','English.cab','ChineseSimplified.cab']:
+        decoded,record=advanced_container(payload,name)
+        destination=containers/name
+        if destination.exists():
+            if digest(destination)!=record['sha256']:raise ValueError('Existing decoded container differs')
+        else:
+            with destination.open('xb') as stream:stream.write(decoded)
+            destination.chmod(0o644)
+        recovered.append(record)
+    output=base/'extracted/f2088'
+    for name,folder in [('MainFeature.cab','app'),('English.cab','english'),('ChineseSimplified.cab','chinese')]:
+        archive=containers/name;records=seven_inventory(archive,base/('inventory/f2088/'+folder+'-list.txt'))
+        if not records or len(records)>300 or sum(int(r.get('Size') or 0) for r in records)>64*1024**2:
+            raise ValueError('F2088 archive expansion cap')
+        destination=output/folder
+        if not destination.exists() or not any(destination.iterdir()):
+            destination.mkdir(parents=True,exist_ok=True)
+            result=run(['7z','x','-y','-o'+str(destination),str(archive)],base/('inventory/f2088/'+folder+'-extract.txt'))
+            if result.returncode:raise RuntimeError('F2088 CAB extraction failed')
+    inert_tree(output)
+    return {'format':'Advanced Installer / prefix512 complement / MSI and MSZip CAB',
+            'extracted_root':str(output.relative_to(ROOT)), 'containers':recovered,
+            'windows_code_executed':False,'bundled_drivers':'inert, never installed or executed'}
 
 
 def hub_extract(source, base):
@@ -219,7 +280,9 @@ def main():
         source=(ROOT/status['path']).resolve()
         if not source.is_relative_to(base) or digest(source)!=status['sha256']:
             raise ValueError('Catalog artifact identity mismatch')
-        if card['name']=='AULA Hub Driver':
+        if card['name']=='F2088':
+            item=f2088_extract(source,base)
+        elif card['name']=='AULA Hub Driver':
             item=hub_extract(source,base)
         else:
             item=inno_extract(source,base/'extracted'/source.stem,base/'inventory'/source.stem)

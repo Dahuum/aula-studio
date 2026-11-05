@@ -245,38 +245,71 @@ it("loads read lighting only after the explicit local-draft action", async () =>
 });
 
 describe("scoped mapping hardware operations", () => {
+  for (const [page,kind,mouseField,keyboardField,otherField] of [
+    ["Key Remapping","base","mouse_keymap","keymap","mouse_fn_layer"],
+    ["Fn Layers","fn","mouse_fn_layer","fn_layer","mouse_keymap"],
+  ] as const) {
+    it(`replaces an assignment with a mouse button in ${kind} only on explicit review`,async()=>{
+      draft.keymap={"4":5};draft.fn_layer={"4":6};
+      draft.consumer_keymap={"5":0xcd};draft.consumer_fn_layer={"5":0xe2};
+      draft.mouse_keymap={"6":3};draft.mouse_fn_layer={"6":4};
+      bridge.call.mockImplementation(async(command:string)=>{
+        if(command==="get_status")return {...status,capabilities:{...status.capabilities,write_keymap:true,write_fn:true}};
+        if(command==="prepare_mapping")return preparation;
+        return defaultCall(command);
+      });
+      render(<App/>);await waitFor(()=>expect(bridge.call).toHaveBeenCalledWith("list_profiles"));
+      fireEvent.click(screen.getByRole("button",{name:"Key Remapping"}));
+      if(page==="Fn Layers")fireEvent.click(screen.getByRole("button",{name:"Fn Layers"}));
+      fireEvent.click(screen.getByRole("button",{name:"A"}));
+      fireEvent.change(screen.getByLabelText("Action type"),{target:{value:"mouse"}});
+      fireEvent.change(screen.getByLabelText("Mouse action"),{target:{value:"2"}});
+      fireEvent.click(screen.getByRole("button",{name:"Assign locally"}));
+      expect(bridge.call.mock.calls.some(([c])=>c==="prepare_mapping"||c.startsWith("commit_"))).toBe(false);
+      const review=screen.getByRole("button",{name:`Review ${kind==="base"?"base":"Fn"} layer write`});
+      await waitFor(()=>expect((review as HTMLButtonElement).disabled).toBe(false));fireEvent.click(review);
+      await screen.findByRole("dialog");
+      const request=bridge.call.mock.calls.find(([c])=>c==="prepare_mapping")?.[1] as {profile:Profile;kind:string};
+      expect(request.kind).toBe(kind);expect(request.profile[mouseField]).toEqual({"4":2,"6":draft[mouseField]!["6"]});
+      expect(request.profile[keyboardField]).toEqual({});expect(request.profile[otherField]).toEqual(draft[otherField]);
+      expect(request.profile.consumer_keymap).toEqual(draft.consumer_keymap);expect(request.profile.consumer_fn_layer).toEqual(draft.consumer_fn_layer);
+      expect(bridge.call.mock.calls.some(([c])=>c.startsWith("commit_"))).toBe(false);
+    });
+  }
   for (const [page, kind, field, other] of [
     ["Key Remapping", "base", "consumer_keymap", "fn_layer"],
     ["Fn Layers", "fn", "consumer_fn_layer", "keymap"],
   ] as const) {
-    it(`edits media in ${kind} and sends the typed draft only on review`, async () => {
-      draft.keymap = { "4": 5 };
-      draft.fn_layer = { "4": 6 };
-      bridge.call.mockImplementation(async (command: string) => {
-        if (command === "get_status") return { ...status, capabilities: { ...status.capabilities, write_keymap: true, write_fn: true } };
-        if (command === "prepare_mapping") return preparation;
-        return defaultCall(command);
+    for (const usage of [0xe2, 0x223]) {
+      it(`edits media ${usage} in ${kind} and sends the typed draft only on review`, async () => {
+        draft.keymap = { "4": 5 };
+        draft.fn_layer = { "4": 6 };
+        bridge.call.mockImplementation(async (command: string) => {
+          if (command === "get_status") return { ...status, capabilities: { ...status.capabilities, write_keymap: true, write_fn: true } };
+          if (command === "prepare_mapping") return preparation;
+          return defaultCall(command);
+        });
+        render(<App />);
+        await waitFor(() => expect(bridge.call).toHaveBeenCalledWith("list_profiles"));
+        if(page==="Fn Layers") fireEvent.click(screen.getByRole("button",{name:"Key Remapping"}));
+        fireEvent.click(screen.getByRole("button", { name: new RegExp(`${page}$`) }));
+        fireEvent.click(screen.getByRole("button", { name: "A" }));
+        fireEvent.change(screen.getByLabelText("Action type"), { target: { value: "media" } });
+        fireEvent.change(screen.getByLabelText("Media action"), { target: { value: String(usage) } });
+        fireEvent.click(screen.getByRole("button", { name: "Assign locally" }));
+        expect(bridge.call.mock.calls.some(([c]) => c === "prepare_mapping" || c.startsWith("commit_"))).toBe(false);
+        const review = screen.getByRole("button", { name: `Review ${kind === "base" ? "base" : "Fn"} layer write` });
+        await waitFor(() => expect((review as HTMLButtonElement).disabled).toBe(false));
+        fireEvent.click(review);
+        await screen.findByRole("dialog");
+        const request = bridge.call.mock.calls.find(([c]) => c === "prepare_mapping")?.[1] as { profile: Profile; kind: string };
+        expect(request.kind).toBe(kind);
+        expect(request.profile[field]).toEqual({ "4": usage });
+        expect(request.profile[kind === "base" ? "keymap" : "fn_layer"]).toEqual({});
+        expect(request.profile[other]).toEqual(draft[other]);
+        expect(bridge.call.mock.calls.some(([c]) => c.startsWith("commit_"))).toBe(false);
       });
-      render(<App />);
-      await waitFor(() => expect(bridge.call).toHaveBeenCalledWith("list_profiles"));
-      if(page==="Fn Layers") fireEvent.click(screen.getByRole("button",{name:"Key Remapping"}));
-      fireEvent.click(screen.getByRole("button", { name: new RegExp(`${page}$`) }));
-      fireEvent.click(screen.getByRole("button", { name: "A" }));
-      fireEvent.change(screen.getByLabelText("Action type"), { target: { value: "media" } });
-      fireEvent.change(screen.getByLabelText("Media action"), { target: { value: "226" } });
-      fireEvent.click(screen.getByRole("button", { name: "Assign locally" }));
-      expect(bridge.call.mock.calls.some(([c]) => c === "prepare_mapping" || c.startsWith("commit_"))).toBe(false);
-      const review = screen.getByRole("button", { name: `Review ${kind === "base" ? "base" : "Fn"} layer write` });
-      await waitFor(() => expect((review as HTMLButtonElement).disabled).toBe(false));
-      fireEvent.click(review);
-      await screen.findByRole("dialog");
-      const request = bridge.call.mock.calls.find(([c]) => c === "prepare_mapping")?.[1] as { profile: Profile; kind: string };
-      expect(request.kind).toBe(kind);
-      expect(request.profile[field]).toEqual({ "4": 0xe2 });
-      expect(request.profile[kind === "base" ? "keymap" : "fn_layer"]).toEqual({});
-      expect(request.profile[other]).toEqual(draft[other]);
-      expect(bridge.call.mock.calls.some(([c]) => c.startsWith("commit_"))).toBe(false);
-    });
+    }
   }
   for (const [page, kind, label] of [
     ["Per-Key RGB", "per_key", "per-key colors"],
@@ -432,7 +465,7 @@ it("reviews a physical snapshot restoration without automatically applying it", 
 
 it("opens long hardware reviews at the heading and keeps keyboard focus inside", async () => {
   const dialog = await openReview();
-  expect(document.activeElement).toBe(dialog);
+  await waitFor(() => expect(document.activeElement).toBe(dialog));
   expect(dialog.scrollTop).toBe(0);
   fireEvent.keyDown(document, { key: "Tab" });
   expect(document.activeElement).toBe(

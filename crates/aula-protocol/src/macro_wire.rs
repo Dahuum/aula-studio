@@ -1,7 +1,7 @@
 //! Static-evidence macro record/pool format for offline research only.
 //! Timing values remain raw. The official recorder establishes the action
-//! flag as release; delay placement across its editors is still unresolved.
-//! Nothing here converts local millisecond macros or uploads them.
+//! flag as release. Application delays follow their event; see MACRO_FORMAT.md.
+//! This raw codec has no HID access; bounded local conversion lives in aula-service.
 use crate::ProtocolError;
 const MAX_RECORD: usize = 4096;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

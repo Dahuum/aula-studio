@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { KEYBOARD, CODE_USAGE } from "./layout";
-import { createProfile, parseProfile, validateMacro, changed } from "./model";
+import { createProfile, parseProfile, validateMacro, changed, mediaActions } from "./model";
 describe("F75 physical layout", () => {
   it("has 80 unique keys, a reserved Fn, and correct usages", () => {
     expect(KEYBOARD).toHaveLength(80);
@@ -15,6 +15,31 @@ describe("F75 physical layout", () => {
   });
 });
 describe("local profiles", () => {
+  it("roundtrips mouse layers, normalizes absent defaults and rejects cross-type aliases", () => {
+    const p=createProfile();
+    expect(changed({...p,mouse_keymap:{},mouse_fn_layer:{}},p)).toBe(false);
+    p.mouse_keymap={"4":1,"5":2,"6":3,"7":4,"8":5};p.mouse_fn_layer={...p.mouse_keymap};
+    expect(parseProfile(JSON.stringify(p))).toEqual(p);
+    for (const invalid of [0,6,256,1.5]) {
+      expect(()=>parseProfile(JSON.stringify({...p,mouse_keymap:{"4":invalid}}))).toThrow(/mouse/);
+    }
+    for (const extra of [{keymap:{"04":5}},{consumer_keymap:{"04":0xcd}}]) {
+      expect(()=>parseProfile(JSON.stringify({...p,...extra}))).toThrow(/conflicting/);
+    }
+  });
+  it("preserves all fourteen native media actions including high bytes in both layers", () => {
+    const p = createProfile();
+    expect(mediaActions).toHaveLength(14);
+    p.consumer_keymap = Object.fromEntries(mediaActions.map((action, i) => [String(4+i), action.usage]));
+    p.consumer_fn_layer = { ...p.consumer_keymap };
+    const decoded = parseProfile(JSON.stringify(p));
+    expect(decoded).toEqual(p);
+    expect(decoded.consumer_keymap!["12"]).toBe(0x223);
+    for (const invalid of [0x1cd, 0xffff, 0x183 + .5]) {
+      p.consumer_keymap["4"] = invalid;
+      expect(() => parseProfile(JSON.stringify(p))).toThrow(/Unsupported/);
+    }
+  });
   it("roundtrips optional media layers and rejects conflicts or unsupported actions", () => {
     const p = createProfile();
     p.consumer_keymap = { "4": 0xcd };

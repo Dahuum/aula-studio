@@ -19,8 +19,8 @@ import tomllib
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC_DOCS = {'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
                'INSTALLATION.md', 'LIMITATIONS.md', 'MEDIA_BINDINGS.md', 'OFFICIAL_FEATURES.md',
-               'ORIGINAL_UI.md', 'PROTOCOL.md', 'REVERSE_ENGINEERING.md', 'ROADMAP.md', 'SOURCES.md',
-               'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md', 'DOWNLOAD_CATALOG.md', 'MULTI_MODEL_RESEARCH.md', 'MODEL_WORKSPACES.md'}
+               'MOUSE_BINDINGS.md', 'ORIGINAL_UI.md', 'PROTOCOL.md', 'REVERSE_ENGINEERING.md', 'ROADMAP.md', 'SOURCES.md',
+               'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md', 'DOWNLOAD_CATALOG.md', 'MULTI_MODEL_RESEARCH.md', 'MODEL_WORKSPACES.md', 'F2088_RESEARCH.md', 'F98_RESEARCH.md', 'MACRO_FORMAT.md', 'F87_READ_CONTRACT.md', 'G5_READ_CONTRACTS.md', 'S75_READ_CONTRACT.md', 'F75_MATRIX_FRAMING.md'}
 ROOT_FILES = {'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'CHANGELOG.md',
               'Cargo.toml', 'Cargo.lock', '.gitignore', '.dockerignore'}
 SECRET = re.compile(rb'(?:gh[pousr]_[A-Za-z0-9_]{25,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)')
@@ -55,6 +55,31 @@ def allowed(name):
     if name.startswith(('app/', 'crates/', 'tests/', 'scripts/', 'site/', '.github/')):
         return p.suffix in {'.rs', '.toml', '.json', '.tsx', '.ts', '.css', '.html', '.js', '.mjs', '.svg', '.png', '.py', '.sh', '.md', '.yml', '.yaml'}
     return False
+
+
+def stage_public_docs(destination):
+    """Replace only owned generated docs with the same publication allowlist."""
+    destination = Path(destination).resolve()
+    if not destination.is_relative_to(ROOT / 'dist') or (destination / '.git').exists():
+        raise ValueError('Native staging must be an owned project dist/ directory without Git metadata')
+    docs = destination / 'docs'
+    if docs.is_symlink() or (docs / '.git').exists():
+        raise ValueError('Refusing symlinked or Git-managed staging documentation')
+    if docs.exists():
+        shutil.rmtree(docs)
+    docs.mkdir(parents=True)
+    for name in PUBLIC_DOCS:
+        source = ROOT / 'docs' / name
+        if source.is_symlink():
+            raise ValueError('Refusing symlinked publication documentation')
+        if source.is_file():
+            (docs / name).write_bytes(sanitized('docs/' + name, source.read_bytes()))
+    (docs / 'screenshots').mkdir()
+    for name in ['lighting-demo.png', 'macros-demo.png']:
+        source = ROOT / 'docs/screenshots' / name
+        if source.is_symlink():
+            raise ValueError('Refusing a symlinked publication screenshot')
+        shutil.copyfile(source, docs / 'screenshots' / name)
 
 
 def sanitized(name, data):

@@ -1,4 +1,28 @@
-# Validation —0.5.0,2026-11-03
+# Validation
+
+## F98 follow-up — current unreleased source
+
+139 Rust tests (56 HID,30 model/codec,28 protocol,16 service,9 native backend),70 frontend tests and16 Python checks pass, with formatting/strict Clippy/TypeScript/Vite. New cases independently check scalar offsets and RGB order, nine-page per-key BGR/tail placement, malformed report/range/index rejection, F98 versus G5 gates, actual-file legacy migration without implicit rewriting, and effect-specific GUI controls. Two new publication tests check the general native builder's documentation allowlist/private-note exclusion and Git/symlink preservation. Older schema1 work remains intact. No F98 hardware request or new physical configuration write occurred. [Contract/evidence](F98_RESEARCH.md).
+
+An initial Rust assertion incorrectly assumed the existing resource-declared local Fn intent was absent; it was corrected without changing that capability. A simultaneous frontend run timed out before any tests because workers could not start under high host load. After closing both owned Ghidra sessions, the same assertions pass with one frontend worker and two Cargo jobs. No unrelated process or host setting was changed.
+
+Current host-built optimized source passed actual native F98 control/per-key persistence and legacy-profile load/explicit-save/history, all10 local workspaces, existing F75 demo workflows and8 Wayland/TTY startup cases. Result directories: `analysis/native-model-smoke/1793801280734548401`, `analysis/native-demo-smoke/1793801291181759570`, `analysis/native-startup-smoke/1793801299431818237`. GUI SHA256 `9c046aec11a0201f7139d71d317894fcccbd8991b3909113869941297ce9d160`; CLI `7365b69dd7bdd72a10659c6b5047eba3d0522f1f8beebd5192672f794cbc3a30`. These are Arch host/glibc2.39 binaries; the Debian-baseline packages below are an earlier checkpoint and are not silently replaced by this follow-up. Latest passive enumeration still sees only3554:fa09 receiver interfaces.
+
+## 0.6.0 baseline checkpoint — 2026-11-04
+
+- 132 Rust tests pass, including 56 HID,23 model/codec,28 protocol,16 service and9 native backend tests. The full suite also passes offline inside the Debian12 build container. Formatting and strict Clippy pass.
+- 68 frontend tests pass; TypeScript/Vite production build passes. New coverage includes explicit macro timing/cancellation, editing/paging, exact copy-name byte/character boundaries, Unicode copies and independent event storage, typed model captures and the partial F2088 layout.
+- 14 Python acquisition/publication checks pass, including synthetic Advanced Installer prefix decoding and malformed container rejection. No proprietary target was executed.
+- The final Debian-baseline native app passed the F75 demo, all10 local model workspaces and8 Wayland/TTY startup cases. Long Unicode macro/profile copies were saved through the actual Rust backend. WebKitWebDriver ignored non-BMP send-keys in an initial attempt; the final test uses the controlled input paste handler and verifies the actual saved name, without replacing native IPC. An additional unsaved-profile confirmation is explicitly accepted in this test.
+- F2088's eight-byte codec, original F75 macro wire inspection and new-model captures are offline-tested. No F2088 hardware access, new-model write, macro upload or wireless operation is enabled. The latest passive enumeration sees a3554:fa09 receiver, not the required wired F75 configuration interface.
+
+Private logs: `analysis/f2088-static/{debian-build-and-tests,frontend-final,frontend-build-final,clippy-final,python-final,debian-native-f75,debian-native-models,debian-native-startup}.log`. No new physical configuration write occurred. Published0.5 validation below remains historical and independent.
+
+Final native results: `analysis/native-demo-smoke/1793782031004601171/result.json`, `analysis/native-model-smoke/1793782039850283871/result.json` and `analysis/native-startup-smoke/1793782050022769251/result.json`; final logs use the `debian-native-final-*` prefix. GUI SHA256 `1f819d3bfa18b0fcd289a427a6d5a501f9c46bbba6ca1cb79188dc487a5177ef`; CLI SHA256 `4e02df552867d75682c057578446ef2b04970858f2b114daf5008d77f81d2bc8`. This is an unreleased development build, not physical validation of untested operations.
+
+Local baseline packages in `dist/development-0.6.0-baseline/` pass an exact native-tested ELF identity audit in all four binary formats (portable,Arch,Debian,RPM). The149-file clean source export matches the sanitized allowlist; archive paths/types, private/proprietary exclusions, omitted Arch .BUILDINFO, Markdown targets and five checksums pass. Fresh Debian12, Ubuntu24.04 and Fedora43 containers each pass package install, CLI version/write guard, actual mapped GTK window as UID1000, and uninstall. Evidence logs `analysis/f2088-static/package-smoke-{debian12,ubuntu2404,fedora43}.log`. No host package installation or USB/display~ mount occurred. The disposable container-only WebKit namespace-sandbox override is never set in the shipped app. Existing public0.4.3/0.5 assets and original installer hashes remain unchanged.
+
+## Published 0.5.0 — 2026-11-03
 
 ## Multi-model implementation
 
@@ -110,3 +134,33 @@ The resulting executable passed the full native WebKit GUI/demo/profile/macro su
 See the [0.4.3 release notes](https://github.com/Dahuum/aula-studio/releases/tag/v0.4.3) and [package-validation workflow runs](https://github.com/Dahuum/aula-studio/actions/workflows/package-validation.yml) for completed matrix results. A committed workflow alone is not a passing test. These tests check package resolution, native startup and uninstallation, not physical USB configuration or a full interactive desktop session on each distribution. Arch's real desktop/Wayland tests remain distinct from container coverage. Mint and other derivatives are compatible targets, not separately tested desktops.
 
 No npm, AUR, apt/dnf repository or Flathub registration is implied by source files or an installation recipe. No ARM, Alpine/musl, AppImage or Flatpak binary is claimed.
+
+## Unreleased 0.6 development verification
+
+124 Rust unit/integration tests, 55 frontend tests and 12 Python checks pass. Formatting, Clippy (`-D warnings`), TypeScript/Vite and optimized native build pass. New tests cover exact-model identities, standard378 versus legacy384 RGB transfers,126-byte plane strides, missing config-tail rejection before subsequent IO, immutable capture storage and profile-schema isolation. Frontend tests retain late-result/model-switch locking and reject incomplete/cross-model DTO shapes.
+
+Native WebKit/Tauri integration passed for all nine local layouts and actual Rust F87/F108/H108 synthetic capture/storage/lighting-projection workflows, raw JSON export with an actual file download, demo-mode physical-read rejection, private file modes and separate profile namespaces. Private evidence: `analysis/native-model-smoke/1793747684698905558/result.json`; native GUI SHA256 `dbc25721cfac43e6fe9b879614bdc4244b6417db8d57442cea9889bd46fb873e`. No IPC mocks, real-device queries or hardware configuration writes were used by this suite.
+
+The full native F75 demo GUI regression passed (`analysis/native-demo-smoke/1793747714980527705/result.json`), including lighting, per-key/Fn/media/local macro/profile flows. All eight native startup cases passed (`analysis/native-startup-smoke/1793747722855473253/result.json`), including actual Wayland windows, both TTY recovery paths and clean error cases. No F87/F108/H108 physical reads or writes have been validated. Passive metadata enumeration found no eligible wired read candidate during this run; this does not establish the user's current connection mode at another time. S75 live queries remain disabled. Published0.5 package-install results above apply only to0.5, not this host-built development binary.
+
+## Macro continuation — unreleased0.6
+
+128 Rust tests,62 frontend tests,12 Python checks, Clippy/fmt/TypeScript/Vite and optimized build pass. New fixture tests cover after-event keyboard/modifier encoding, adjacent/trailing delay preservation, unsupported leading silence/usages/names,20-bit overflow and4KiB default-pool bounds. Local GUI tests cover event edits/reorder/insertion, independent duplication, pagination and preview cancellation on profile replacement. Native actual Rust wire inspection passes; the toolbar's first hit-area failure was fixed and the actual native click test rerun successfully.
+
+Final GUI SHA256 `4cab78c6326ac2d87d8e97dd32b553c136db9b5263586ba20588520a5ba1b50c`. Full native F75 demo/edit/inspection regression: `analysis/native-demo-smoke/1793749345019481883/result.json`. Multi-model regression: `analysis/native-model-smoke/1793749369449764855/result.json`. All8 Wayland/TTY startup cases: `analysis/native-startup-smoke/1793749379023603147/result.json`. All tests isolate storage/block hardware writes. No actual macro HID query, upload or playback was performed. These new source changes are not in the older staged development archive or public0.5 release.
+
+## Original layer tabs follow-up (unreleased0.6)
+
+Optimized GUI f6f935721f9e660ea688a50dd55a09ae02b57271884de8410ddade55379a1bba passed native F75 integration, all ten local model workspaces, and eight startup/Wayland/TTY/error cases. Layer tests check85×45 dimensions,1px row spacing through measured bounds, right alignment with actual key rectangles,10px vertical gap and notification-time hit targets. Existing frontend regression covers pressed-state navigation and protected Fn. Native tests isolate app data and block physical writes. Earlier failed geometry and asynchronous save/list runs are retained; the final passes are native-demo1793836285231860300, native-model1793836299256374894 and native-startup1793836322751906999 under private analysis. Packaged F98 and Debian-baseline artifacts predate this UI refinement and retain their original test identities.
+
+## Fourteen media actions (unreleased0.6)
+
+142 Rust,73 frontend and16 Python checks pass, along with rustfmt/strict Clippy/TypeScript/Vite and optimized app/CLI builds. Exact native DWORD fixtures cover fourteen actions and both layers. Mock tests exercise all28 action/layer combinations, comparing complete bank contents and preserving an opaque unrelated record. Backend read projection rejects unsupported high-byte usages/flags/chords without corrupting raw data; profiles retain16-bit values and reject truncation aliases. Frontend reviews preserve high-byte values and never commit on local assignment.
+
+Native GUI89e763989faa49ab707ec1ccd408b8497e078e7b2b4b9b98fe0055614f0459b5 passes F75 demo→actual Rust storage→export/import with browser-home/calculator alongside play/mute, all10 model workspaces and8 startup/Wayland/TTY/error cases. Private result IDs: demo1793836759482810022,model1793836774305839475,startup1793836782658792261. An initial existing focus assertion raced React effects; waiting for actual focus resolves the harness race, and the original failed run is retained. Tests block physical writes. No physical media event, new model access or power-cycle persistence is verified.
+
+## Normal mouse assignments (unreleased0.6)
+
+145 Rust,76 frontend and16 Python checks pass, plus rustfmt/strict Clippy/TypeScript/Vite/optimized builds. Exact five-record fixtures and both-layer roundtrip reject unknown buttons and preserve noncanonical repeat/tail forms. Combined media/mouse mock transactions cover38 action/layer combinations, full affected-bank equality and opaque unrelated records. Service/backend tests cover old-profile compatibility, cross-type/numeric-alias conflicts, exact read projection and review names; frontend tests verify local replacement and review-only native requests.
+
+Native GUI95458ae76ee589f1ae48321dab04e8f246fea071dfde2f2944d9881a9592e768 passes actual Rust F75 demo/profile/export/import with normal mouse assignments in both layers, all ten model workspaces and eight startup/Wayland/TTY/error cases. Private results demo1793837460010341374,model1793837503506428169,startup1793837504639171106. The initial obsolete blanket type1 rejection failure is retained; it now tests invalid button6, and exact native fixtures establish buttons1–5. No physical mouse event, hardware write or persistence is inferred. See [mouse evidence and gaps](MOUSE_BINDINGS.md).

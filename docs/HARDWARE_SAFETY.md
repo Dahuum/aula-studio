@@ -1,4 +1,6 @@
-# Hardware safety — 0.2
+# Hardware safety
+
+Unreleased F98 codecs are IO-free and deliberately expose no begin/end transaction, read, reset or firmware API. A generated per-key image covers only resource-known positions and must never be treated as a complete backup/restore. The unresolved native response/initial-read-length behavior keeps live F98 access disabled; shared USB identifiers do not bypass this boundary. See [F98 evidence](F98_RESEARCH.md).
 
 The old0.1 blanket-disabled write policy was replaced with bounded, reviewed transactions. No operation runs automatically on startup, hotplug or profile save/load. Standard tests block writes; the separately authorized bounded brightness harness is the explicit exception. The CLI has no writes. Native QA sets AULA_DISABLE_HARDWARE_WRITES=1, which blocks both physical commit entry points.
 

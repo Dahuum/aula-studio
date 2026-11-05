@@ -68,6 +68,34 @@ class PublicationTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Git repository'):
                 exporter.prepare(output=out)
             self.assertEqual(marker.read_text(), 'preserve existing repository')
+    def test_native_docs_staging_removes_private_and_stale_notes_without_touching_source(self):
+        source = ROOT / 'docs/PROGRESS.md'
+        before = source.read_bytes() if source.exists() else None
+        with tempfile.TemporaryDirectory(dir=ROOT / 'dist') as temporary:
+            stage = Path(temporary); docs = stage / 'docs'; docs.mkdir()
+            for name in ['PROGRESS.md', 'CONTINUATION.md', 'FINAL_REPORT.md', 'unreviewed.md']:
+                (docs / name).write_text('Private staging content must not ship')
+            exporter.stage_public_docs(stage)
+            self.assertEqual({p.name for p in docs.glob('*.md')},
+                             {name for name in exporter.PUBLIC_DOCS if (ROOT / 'docs' / name).is_file()})
+            self.assertTrue((docs / 'screenshots/lighting-demo.png').is_file())
+            for p in docs.glob('*.md'):
+                self.assertNotIn(b'Private staging content must not ship', p.read_bytes())
+                self.assertNotIn(b'/home/void_id', p.read_bytes())
+        if before is not None:
+            self.assertEqual(source.read_bytes(), before)
+    def test_native_docs_staging_preserves_git_and_rejects_symlinked_docs(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / 'dist') as temporary:
+            stage = Path(temporary); (stage / '.git').mkdir()
+            marker = stage / '.git/config'; marker.write_text('Keep this repository')
+            with self.assertRaises(ValueError):
+                exporter.stage_public_docs(stage)
+            self.assertEqual(marker.read_text(), 'Keep this repository')
+        with tempfile.TemporaryDirectory(dir=ROOT / 'dist') as temporary:
+            stage = Path(temporary); (stage / 'docs').symlink_to(ROOT / 'docs', target_is_directory=True)
+            with self.assertRaises(ValueError):
+                exporter.stage_public_docs(stage)
+            self.assertTrue((stage / 'docs').is_symlink())
 
 
 if __name__ == '__main__':

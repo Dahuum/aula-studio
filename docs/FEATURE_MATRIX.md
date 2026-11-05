@@ -19,9 +19,10 @@ A physical read does not validate a write. All write paths below require explici
 | Bank backup restoration | IMPLEMENTED / OFFLINE TESTED |Known ANSI source/LED entries restored through review; protected/unknown rows and current mode preserved |
 | Local profiles CRUD/history/import/export/preferences | IMPLEMENTED / OFFLINE TESTED |Version1 with backward-compatible optional fields |
 | Local macro record/edit/import/export/preview | IMPLEMENTED / OFFLINE TESTED |No global key injection |
-| Macro wire event/record/directory codec | IMPLEMENTED / OFFLINE TESTED |Developer raw codec; release flag established from recorder; delay placement still prevents local macro conversion |
-| Onboard macro uploading | INVESTIGATED / NOT IMPLEMENTED |Delay placement/repeat/binding/persistence/recovery gaps remain |
-| Multimedia UI assignments | IMPLEMENTED / OFFLINE TESTED |Seven official media actions in base/Fn; native demo/profile workflows pass; physical writes/events unverified |
+| Macro wire event/record/directory codec | IMPLEMENTED / OFFLINE TESTED |Raw codec plus unreleased0.6 bounded local→wire inspection; application after-event timing established; physical playback unverified |
+| Onboard macro uploading | INVESTIGATED / NOT IMPLEMENTED |Physical timing/repeat/binding/persistence/recovery gaps remain |
+| Mouse-button assignments | IMPLEMENTED / OFFLINE TESTED |Five native normal-button actions in both layers; local/profile/readback and reviewed matrix transaction implemented; physical output unverified |
+| Multimedia UI assignments | IMPLEMENTED / OFFLINE TESTED |Fourteen native media/display/application-launch actions in base/Fn, including16-bit usages; offline codecs/transactions/profile/readback tests pass; physical writes/events unverified |
 | Diagnostics / CLI / native GUI / demo | IMPLEMENTED / OFFLINE TESTED |Native read/prepare QA separate from mocked tests |
 | Original Windows UI recreation | PARTIALLY IMPLEMENTED |Measured canvas/colors/effect names; optional private artwork; independently drawn ANSI keyboard and standalone assets; full pixel identity unverified |
 | Hotplug/reconnect | PARTIALLY IMPLEMENTED |Polling and connection-epoch checks; removal observed, full reconnect write validation pending |
@@ -45,3 +46,11 @@ Theme switching has user-reported physical confirmation. Brightness-only6→5→
 | F87/S75/Hub native/static protocol research | INVESTIGATED / NOT IMPLEMENTED for hardware configuration |[Evidence](MULTI_MODEL_RESEARCH.md), unresolved operations remain unavailable |
 | New model physical configuration | BLOCKED ON HARDWARE VALIDATION |Identity/backup/revision/semantic gaps must also be resolved; no enabled writes |
 | F2088 and mouse controllers | INVESTIGATED / NOT IMPLEMENTED |Research metadata only, no recovered controller/layout |
+
+## Unreleased 0.6 read-only development
+
+F87/F87 Pro010b/F87 Pro Wired and independently analyzed F108/H108: **IMPLEMENTED / OFFLINE TESTED** bounded identity-gated captures, private raw export and lighting-only local draft projection. Physical read acceptance and all new-model writes are **BLOCKED ON HARDWARE VALIDATION**. Config/palette/base/RGB sizes differ by model and are tested separately. S75/F108Pro/F98Pro passive product-name matching improves discovery only. See [F87](F87_READ_CONTRACT.md), [F108/H108](G5_READ_CONTRACTS.md) and [S75 limitations](S75_READ_CONTRACT.md). Stable0.5 downloads retain their original local-only scope.
+
+F2088 in unreleased0.6: **PARTIALLY IMPLEMENTED**103-position local workspace with unknown Fn/LED/matrix roles omitted; normal eight-byte panel-lighting codec **IMPLEMENTED / OFFLINE TESTED**. All F2088 hardware access remains disabled. The native Windows host-action path is not presented as onboard macro support. [Exact evidence/limits](F2088_RESEARCH.md).
+
+F98 Pro in unreleased0.6: **IMPLEMENTED / OFFLINE TESTED** native20-preset lighting definitions,0–5 slider ranges, independent scalar/per-key data codecs, local per-key intent, per-effect disabled controls and compatible loading of older local profiles. **INVESTIGATED / NOT IMPLEMENTED** physical access: incomplete identity/backup/response/recovery, no live Read/Apply/Upload. The95-position resource is not a verified physical98-key reconstruction. [Exact evidence/limits](F98_RESEARCH.md).

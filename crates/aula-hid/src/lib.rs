@@ -312,6 +312,7 @@ pub fn demo_device() -> DeviceSummary {
 }
 
 pub mod mapping_transaction;
+pub mod model_read;
 pub mod transaction;
 
 struct HidTransport {
@@ -713,7 +714,7 @@ pub fn read_model_identity(path: &str) -> Result<[u8; 6]> {
 }
 fn require_f75_identity(identity: [u8; 6]) -> Result<()> {
     if identity != [3, 0, 0, 0, 0, 0xcd] {
-        return Err(HidError::Unsupported("Shared USB ID is not the verified original F75 model identity; configuration is blocked. Use the model workspaces for offline editing.".into()));
+        return Err(HidError::Unsupported("Shared USB ID is not the verified original F75 model identity; configuration is blocked. Use the device library for model-specific tools.".into()));
     }
     Ok(())
 }
@@ -725,7 +726,9 @@ pub struct CatalogDevice {
     pub interface_number: i32,
     pub product_name: String,
     pub candidates: Vec<String>,
-    pub hardware_access_enabled: bool,
+    pub hardware_writes_enabled: bool,
+    pub read_candidate: bool,
+    pub product_name_matched: bool,
     pub note: String,
 }
 /// Model candidates from read-only USB metadata. Never opens a handle or guesses
@@ -734,19 +737,42 @@ pub fn discover_catalog_devices() -> Result<Vec<CatalogDevice>> {
     let api = hidapi::HidApi::new().map_err(|e| HidError::Device(e.to_string()))?;
     let mut result = Vec::new();
     for info in api.device_list() {
-        let candidates = aula_models::usb_candidates(
+        let (candidates, product_name_matched) = aula_models::usb_candidates_with_product(
             info.vendor_id(),
             info.product_id(),
             info.interface_number(),
+            info.product_string().unwrap_or(""),
         )
         .map_err(HidError::Unsupported)?;
         if candidates.is_empty() {
             continue;
         }
-        result.push(CatalogDevice{path:info.path().to_string_lossy().into_owned(),vendor_id:info.vendor_id(),product_id:info.product_id(),interface_number:info.interface_number(),product_name:info.product_string().unwrap_or("").into(),candidates:candidates.iter().map(|m|m.id.clone()).collect(),hardware_access_enabled:false,note:"Metadata candidate only. Shared identifiers do not grant hardware access; new models are offline-only.".into()});
+        let read_candidate = info.vendor_id() == 0x258a
+            && info.product_id() == 0x010c
+            && info.interface_number() == 1
+            && info.usage_page() == 0xff00
+            && info.usage() == 1
+            && descriptor_feature_length(&info.path().to_string_lossy())
+                .ok()
+                .flatten()
+                == Some(REPORT_SIZE);
+        result.push(CatalogDevice {
+            path:info.path().to_string_lossy().into_owned(), vendor_id:info.vendor_id(), product_id:info.product_id(),
+            interface_number:info.interface_number(), product_name:info.product_string().unwrap_or("").into(),
+            candidates:candidates.iter().map(|m|m.id.clone()).collect(), hardware_writes_enabled:false,
+            product_name_matched, read_candidate,
+            note:"USB metadata candidate. Explicit model captures verify exact identity before bounded reads; additional-model writes remain disabled.".into(),
+        });
     }
     result.sort_by(|a, b| a.path.cmp(&b.path));
-    result.dedup_by(|a, b| a.path == b.path);
+    result.dedup_by(|a, b| {
+        if a.path == b.path {
+            b.read_candidate |= a.read_candidate;
+            true
+        } else {
+            false
+        }
+    });
     Ok(result)
 }
 #[cfg(test)]
@@ -763,5 +789,35 @@ mod model_identity_tests {
         ] {
             assert!(require_f75_identity(id).is_err());
         }
+    }
+}
+
+/// Explicit bounded reads for independently established G5 models. Identity is
+/// checked inside the same device lease before any model-specific bank read.
+pub fn read_model_capture(path: &str, model_id: &str) -> Result<aula_models::g5_capture::Capture> {
+    aula_models::g5_capture::expected_identity(model_id).map_err(HidError::Unsupported)?;
+    let selected = discover()?
+        .into_iter()
+        .find(|d| d.path == path && d.read_supported && d.usage_page == 0xff00 && d.usage == 1)
+        .ok_or_else(|| {
+            HidError::Unsupported(
+                "Model reader requires wired interface1, vendor collectionff00/1 and feature06/520B"
+                    .into(),
+            )
+        })?;
+    let expected = model_id.to_string();
+    run_device_checked(selected, false, move |t| {
+        model_read::capture_from_transport(
+            t,
+            &expected,
+            aula_models::g5_capture::CaptureSource::PhysicalRead,
+        )
+    })
+}
+impl model_read::ModelReadTransport for HidTransport {
+    fn read(&mut self, request: aula_models::g5_capture::ReadRequest) -> Result<Vec<u8>> {
+        self.check_deadline()?;
+        std::thread::sleep(Duration::from_millis(20));
+        self.read_report(&request.bytes())
     }
 }

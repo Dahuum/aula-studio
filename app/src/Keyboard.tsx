@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
-import { KEYBOARD } from "./layout";
-import { effects, rgbHex, mediaActions } from "./model";
+import { KEYBOARD, KEYBOARD_PREVIEW, keyPreviewRect } from "./layout";
+import { effects, rgbHex, mediaActions, mouseActions } from "./model";
 import type { Profile } from "./model";
 export function Keyboard({
   profile,
@@ -19,6 +19,7 @@ export function Keyboard({
 }) {
   const mapping = fnLayer ? profile.fn_layer : profile.keymap;
   const mediaMapping = (fnLayer ? profile.consumer_fn_layer : profile.consumer_keymap) ?? {};
+  const mouseMapping = (fnLayer ? profile.mouse_fn_layer : profile.mouse_keymap) ?? {};
   const pattern =
     effects.find((effect) => effect.id === profile.lighting.effect)?.pattern ??
     "solid";
@@ -50,15 +51,16 @@ export function Keyboard({
               : profile.lighting.colorful
                 ? `hsl(${Math.round(key.x * 22 + key.y * 15)} 85% 70%)`
                 : rgbHex(profile.lighting.color);
+          const rect = keyPreviewRect(key);
           const style = {
             "--key-color": color,
-            left: `${(/^F\d+$/.test(key.label) ? [99,139,179,219,272,312,352,392,445,485,525,565][+key.label.slice(1)-1] : 21+key.x*39.5)/679*100}%`,
-            top: `${(30+key.y*41)/304*100}%`,
-            width: `${(key.width*39.5-2)/679*100}%`,
-            height: `${40/304*100}%`,
+            left: `${rect.x/KEYBOARD_PREVIEW.width*100}%`,
+            top: `${rect.y/KEYBOARD_PREVIEW.height*100}%`,
+            width: `${rect.width/KEYBOARD_PREVIEW.width*100}%`,
+            height: `${rect.height/KEYBOARD_PREVIEW.height*100}%`,
             "--key-index": index,
           } as CSSProperties;
-          const mapped = mapping[key.id] !== undefined || mediaMapping[key.id] !== undefined;
+          const mapped = mapping[key.id] !== undefined || mediaMapping[key.id] !== undefined || mouseMapping[key.id] !== undefined;
           const className = `key ${selected.includes(key.id) ? "selected" : ""} ${highlight === key.usage ? "pressed" : ""} ${profile.lighting.effect === 0 ? "unlit" : ""} ${showMapping && mapped ? "mapped" : ""}`;
           const content = (
             <>
@@ -66,7 +68,8 @@ export function Keyboard({
               {showMapping && mapped && (
                 <small>
                   →{" "}
-                  {mediaMapping[key.id] !== undefined ? mediaActions.find(a => a.usage === mediaMapping[key.id])?.short ?? "Media" :
+                  {mouseMapping[key.id] !== undefined ? mouseActions.find(a => a.button === mouseMapping[key.id])?.short ?? "Mouse" :
+                    mediaMapping[key.id] !== undefined ? mediaActions.find(a => a.usage === mediaMapping[key.id])?.short ?? "Media" :
                     KEYBOARD.find((k) => k.usage === mapping[key.id])?.label ?? mapping[key.id]}
                 </small>
               )}

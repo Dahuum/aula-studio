@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { call, native } from "./api";
 import { Macros } from "./Macros";
+import { copyName } from "./copyName";
+import { ModelCaptures } from "./ModelCaptures";
 import { mediaActions, rgbHex, validateMacro } from "./model";
 import { modelCode } from "./modelLibrary";
 import type {
@@ -16,7 +18,13 @@ import "./models.css";
 
 const serialise = (p: ModelDraft | undefined) => JSON.stringify(p);
 const usb = (v: number) => v.toString(16).padStart(4, "0");
-export function ModelWorkbench({ onBack }: { onBack: () => void }) {
+export function ModelWorkbench({
+  onBack,
+  demoMode = false,
+}: {
+  onBack: () => void;
+  demoMode?: boolean;
+}) {
   const [models, setModels] = useState<ModelDefinition[]>([]),
     [devices, setDevices] = useState<ModelDevice[]>([]),
     [profiles, setProfiles] = useState<ModelDraft[]>([]);
@@ -41,6 +49,9 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
   const model = models.find((m) => m.id === modelId),
     dirty = serialise(draft) !== baseline,
     stored = profiles.some((p) => p.id === draft?.id);
+  const lightingControls = model?.lighting?.effects.find(
+    (effect) => effect.id === draft?.lighting?.effect,
+  )?.controls;
   const perform = async (fn: () => Promise<void>) => {
     setBusy(true);
     setError("");
@@ -150,7 +161,9 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
     setDraft(undefined);
     setBaseline(undefined);
     setModelId(id);
-    setTab("Lighting");
+    setTab(
+      models.find((m) => m.id === id)?.lighting ? "Lighting" : "Assignments",
+    );
     setError("");
     setMessage("");
   };
@@ -320,8 +333,9 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
               ))}
           </nav>
           <p>
-            Model resources do not establish physical compatibility. New-model
-            workspaces never send HID commands.
+            Model resources do not establish physical compatibility. Local
+            editing never sends HID commands. The F87, F108 and H108 adapters
+            offer explicit, identity-gated read-only captures.
           </p>
         </aside>
         <main className="models-main">
@@ -349,15 +363,26 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                   <p>
                     {model.id === "f75-ansi"
                       ? "Original ANSI F75 uses the existing reviewed controller."
-                      : "Hardware access disabled · resource-derived layout · physical validation pending"}
+                      : [
+                            "f87",
+                            "f87-pro-010b",
+                            "f87-pro-wired",
+                            "f108",
+                            "h108",
+                          ].includes(model.id)
+                        ? "Experimental read-only adapter · writes disabled · physical validation pending"
+                        : "Hardware access disabled · resource-derived layout · physical validation pending"}
                   </p>
                 </div>
                 <span className="model-key-count">
                   {model.keys.length
-                    ? `${model.keys.length} keys`
+                    ? `${model.keys.length} ${model.status === "partial_resource_layout" ? "resource positions" : "keys"}`
                     : "No recovered layout"}
                 </span>
               </div>
+              {draft && model.id !== "f75-ansi" && model.notes[0] && (
+                <p className="models-layout-note">{model.notes[0]}</p>
+              )}
               {model.id === "f75-ansi" ? (
                 <section className="models-panel">
                   <h3>Open the existing F75 controller</h3>
@@ -463,7 +488,7 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                     aria-label="Model workspace views"
                   >
                     {[
-                      "Lighting",
+                      ...(model.lighting ? ["Lighting"] : []),
                       "Assignments",
                       ...(model.fn_layer ? ["Fn layer"] : []),
                       "Local macros",
@@ -511,6 +536,7 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                               {model.lighting.brightness_max}
                               <input
                                 aria-label="Model brightness"
+                                disabled={lightingControls?.brightness === false}
                                 type="range"
                                 min="0"
                                 max={model.lighting.brightness_max}
@@ -530,6 +556,7 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                               {model.lighting.speed_max}
                               <input
                                 aria-label="Model speed"
+                                disabled={lightingControls?.speed === false}
                                 type="range"
                                 min="0"
                                 max={model.lighting.speed_max}
@@ -548,6 +575,7 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                               Draft color
                               <input
                                 aria-label="Model draft color"
+                                disabled={lightingControls?.color === false}
                                 type="color"
                                 value={rgbHex(draft.lighting.color)}
                                 onChange={(e) => {
@@ -739,7 +767,7 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                             const p = {
                               ...structuredClone(draft),
                               id: crypto.randomUUID(),
-                              name: (draft.name + " copy").slice(0, 120),
+                              name: copyName(draft.name, " copy", 120),
                             };
                             setDraft(p);
                             setBaseline(undefined);
@@ -847,6 +875,33 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
               )}
             </>
           )}
+          {model && (
+            <ModelCaptures
+              model={model}
+              devices={devices}
+              demoMode={demoMode}
+              onExport={(title, text) => {
+                setJsonTitle("Export " + title);
+                setJsonText(text);
+              }}
+              onDraft={(p) => {
+                if (
+                  dirty &&
+                  !window.confirm(
+                    "Replace current local edits with a lighting-only draft from this capture?",
+                  )
+                )
+                  return;
+                setDraft(p);
+                setBaseline(undefined);
+                setSelected([]);
+                setTab("Lighting");
+                setMessage(
+                  "Created a local lighting-only draft. Assignments and macros were not imported; hardware was not configured.",
+                );
+              }}
+            />
+          )}
           <section className="models-panel models-discovery">
             <h3>Detected model candidates</h3>
             <button
@@ -873,6 +928,13 @@ export function ModelWorkbench({ onBack }: { onBack: () => void }) {
                       .map((id) => models.find((m) => m.id === id)?.name ?? id)
                       .join(", ")}
                   </p>
+                  {d.product_name_matched && (
+                    <p>
+                      USB product string matches the official resource. Hardware
+                      revision and configuration support still require
+                      verification.
+                    </p>
+                  )}
                   <small>{d.note}</small>
                 </article>
               ))

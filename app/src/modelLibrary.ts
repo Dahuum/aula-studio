@@ -22,6 +22,7 @@ export type ModelDefinition = {
     product_id: number;
     interface_number: number | null;
     connection: string;
+    product_name?: string;
   }[];
   model_identity: number[] | null;
   keys: ModelKey[];
@@ -29,7 +30,11 @@ export type ModelDefinition = {
     brightness_max: number;
     speed_max: number;
     default_effect: number;
-    effects: { id: number; name: string }[];
+    effects: {
+      id: number;
+      name: string;
+      controls?: { brightness: boolean; speed: boolean; color: boolean };
+    }[];
     per_key: boolean;
   } | null;
   fn_layer: boolean;
@@ -66,7 +71,9 @@ export type ModelDevice = {
   interface_number: number;
   product_name: string;
   candidates: string[];
-  hardware_access_enabled: false;
+  hardware_writes_enabled: false;
+  read_candidate?: boolean;
+  product_name_matched?: boolean;
   note: string;
 };
 export function modelCode(usage: number): string {
@@ -161,6 +168,10 @@ export function parseModelDraft(text: string): ModelDraft {
   const m = modelRegistry.find((m) => m.id === p.model_id);
   if (!m?.keys.length || m.id === "f75-ansi")
     throw new Error("No recovered model layout");
+  // Schema1 F98 profiles predating the recovered lighting definitions stay
+  // readable. This adds local intent only; no saved file/device is changed.
+  if (m.id === "f98-pro" && p.lighting === null)
+    p.lighting = defaultModelLighting(m);
   if (m.lighting) {
     const l = p.lighting,
       c = m.lighting;
@@ -231,6 +242,16 @@ export function parseModelDraft(text: string): ModelDraft {
   }
   return p as unknown as ModelDraft;
 }
+function defaultModelLighting(m: ModelDefinition): ModelDraft["lighting"] {
+  return m.lighting
+    ? {
+        effect: m.lighting.default_effect,
+        brightness: m.lighting.brightness_max,
+        speed: Math.floor(m.lighting.speed_max / 2),
+        color: [255, 96, 32],
+      }
+    : null;
+}
 export function newModelDraft(modelId: string, name: string): ModelDraft {
   const m = modelRegistry.find((m) => m.id === modelId);
   if (!m?.keys.length || m.id === "f75-ansi")
@@ -241,14 +262,7 @@ export function newModelDraft(modelId: string, name: string): ModelDraft {
       id: crypto.randomUUID(),
       name,
       model_id: modelId,
-      lighting: m.lighting
-        ? {
-            effect: m.lighting.default_effect,
-            brightness: m.lighting.brightness_max,
-            speed: Math.floor(m.lighting.speed_max / 2),
-            color: [255, 96, 32],
-          }
-        : null,
+      lighting: defaultModelLighting(m),
       per_key: {},
       assignments: {},
       fn_assignments: {},

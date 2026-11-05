@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { call, native } from "./api";
 import { Keyboard } from "./Keyboard";
 import { Macros } from "./Macros";
+import { copyName } from "./copyName";
 import { ModelWorkbench } from "./ModelWorkbench";
 import { OriginalNavigation, OriginalTop, UiIcon, useOriginalFrame } from "./OriginalChrome";
 import { OriginalColors } from "./OriginalColors";
-import { KEYBOARD } from "./layout";
+import { KEYBOARD, KEYBOARD_PREVIEW } from "./layout";
 import {
   createProfile,
   changed,
@@ -15,6 +16,7 @@ import {
   fileName,
   lightingCapabilities,
   mediaActions,
+  mouseActions,
 } from "./model";
 import type {
   Profile,
@@ -43,7 +45,7 @@ export default function App() {
     [diagnostic, setDiagnostic] = useState(""),
     [backups, setBackups] = useState<Backup[]>([]),
     [target, setTarget] = useState(4),
-    [actionType, setActionType] = useState<"keyboard" | "media">("keyboard"),
+    [actionType, setActionType] = useState<"keyboard" | "media" | "mouse">("keyboard"),
     [readConfiguration, setReadConfiguration] = useState<ReadConfiguration>(),
     [preparedLighting, setPreparedLighting] = useState<PreparedLighting>();
   const originalFrame=useOriginalFrame();
@@ -255,6 +257,7 @@ export default function App() {
   const remap = page === "Key Remapping" || page === "Fn Layers",
     layer = page === "Fn Layers" ? "fn_layer" : "keymap";
   const consumerLayer = page === "Fn Layers" ? "consumer_fn_layer" : "consumer_keymap";
+  const mouseLayer = page === "Fn Layers" ? "mouse_fn_layer" : "mouse_keymap";
   const available = selected.filter(
     (id) => page === "Per-Key RGB" || (id !== "fn" && !(+id >= 58 && +id <= 69)),
   );
@@ -296,6 +299,7 @@ export default function App() {
       const result = await call<{
         assignments?: Record<string, number>;
         consumer_assignments?: Record<string, number>;
+        mouse_assignments?: Record<string, number>;
         colors?: Profile["per_key"];
       }>("read_mapping", { kind });
       setDiagnostic(JSON.stringify(result, null, 2));
@@ -309,13 +313,14 @@ export default function App() {
           patch({
             [kind === "base" ? "keymap" : "fn_layer"]: result.assignments ?? {},
             [kind === "base" ? "consumer_keymap" : "consumer_fn_layer"]: result.consumer_assignments ?? {},
+            [kind === "base" ? "mouse_keymap" : "mouse_fn_layer"]: result.mouse_assignments ?? {},
           });
         setMessage(
           "Loaded the readable bank into the draft. No keyboard settings were changed.",
         );
       }
     });
-  if(page==="Models")return <ModelWorkbench onBack={()=>navigate("Lighting")}/>;
+  if(page==="Models")return <ModelWorkbench demoMode={preferences.demo_mode} onBack={()=>navigate("Lighting")}/>;
   return (
     <div data-page={page} className={`app original-app ${preferences.reduce_motion ? "reduce-motion" : ""}`} style={originalFrame.style}>
       <div inert={!!modal || !!preparedLighting}><OriginalTop assets={originalFrame.assets} dirty={dirty} busy={busy} mode={status?.mode??"hardware"} connected={!!status?.connected} onNavigate={navigate} onClose={()=>{if(!busy&&(!dirty||window.confirm("Discard unsaved changes and close?")))void call("window_action",{action:"close"}).catch(e=>setError(String(e)));}}/></div>
@@ -375,6 +380,12 @@ export default function App() {
           page === "Per-Key RGB" ||
           remap) && (
           <section className="panel keyboard-panel original-keyboard-panel">
+            {remap && (
+              <div className="original-layer-tabs" style={{paddingRight:KEYBOARD_PREVIEW.width-KEYBOARD_PREVIEW.right}} role="group" aria-label="Keyboard layer">
+                <button aria-label="Default layer" aria-pressed={page === "Key Remapping"} onClick={() => navigate("Key Remapping")}>Default</button>
+                <button aria-label="Fn Layers" aria-pressed={page === "Fn Layers"} onClick={() => navigate("Fn Layers")}>FN1</button>
+              </div>
+            )}
             <div className="panel-heading">
               <div>
                 <h2>{profile.name}</h2>
@@ -506,20 +517,21 @@ export default function App() {
                 aria-label="Action type"
                 value={actionType}
                 onChange={(e) => {
-                  const kind = e.target.value as "keyboard" | "media";
+                  const kind = e.target.value as "keyboard" | "media" | "mouse";
                   setActionType(kind);
-                  setTarget(kind === "media" ? 0xcd : 4);
+                  setTarget(kind === "media" ? 0xcd : kind === "mouse" ? 1 : 4);
                 }}
               >
                 <option value="keyboard">Keyboard key</option>
                 <option value="media">Media control</option>
+                <option value="mouse">Mouse button</option>
               </select>
               <select
-                aria-label={actionType === "media" ? "Media action" : "Replacement key"}
+                aria-label={actionType === "media" ? "Media action" : actionType === "mouse" ? "Mouse action" : "Replacement key"}
                 value={target}
                 onChange={(e) => setTarget(+e.target.value)}
               >
-                {actionType === "media" ? mediaActions.map((a) => <option key={a.usage} value={a.usage}>{a.label}</option>) : KEYBOARD.filter((k) => k.usage !== undefined).map((k) => (
+                {actionType === "media" ? mediaActions.map((a) => <option key={a.usage} value={a.usage}>{a.label}</option>) : actionType === "mouse" ? mouseActions.map(a => <option key={a.button} value={a.button}>{a.label}</option>) : KEYBOARD.filter((k) => k.usage !== undefined).map((k) => (
                   <option key={k.id} value={k.usage}>
                     {k.label} ({k.code})
                   </option>
@@ -530,12 +542,14 @@ export default function App() {
                 onClick={() => {
                   const next = { ...profile[layer] };
                   const media = { ...profile[consumerLayer] };
+                  const mouse = { ...profile[mouseLayer] };
                   available.forEach((id) => {
-                    delete next[id]; delete media[id];
+                    delete next[id]; delete media[id]; delete mouse[id];
                     if (actionType === "media") media[id] = target;
+                    else if (actionType === "mouse") mouse[id] = target;
                     else next[id] = target;
                   });
-                  patch({ [layer]: next, [consumerLayer]: media });
+                  patch({ [layer]: next, [consumerLayer]: media, [mouseLayer]: mouse });
                 }}
               >
                 Assign locally
@@ -545,8 +559,9 @@ export default function App() {
                 onClick={() => {
                   const next = { ...profile[layer] };
                   const media = { ...profile[consumerLayer] };
-                  available.forEach((id) => { delete next[id]; delete media[id]; });
-                  patch({ [layer]: next, [consumerLayer]: media });
+                  const mouse = { ...profile[mouseLayer] };
+                  available.forEach((id) => { delete next[id]; delete media[id]; delete mouse[id]; });
+                  patch({ [layer]: next, [consumerLayer]: media, [mouseLayer]: mouse });
                 }}
               >
                 Clear selected draft
@@ -556,16 +571,16 @@ export default function App() {
                   if (
                     window.confirm("Clear all assignments in this local layer?")
                   )
-                    patch({ [layer]: {}, [consumerLayer]: {} });
+                    patch({ [layer]: {}, [consumerLayer]: {}, [mouseLayer]: {} });
                 }}
               >
                 Clear layer draft
               </button>
             </div>
             <p className="muted">
-              Media controls use their own verified record format. Keyboard and
-              media assignments share this layer's backed-up review; physical
-              behavior remains unverified.
+              Keyboard, media and mouse assignments share this layer's backed-up review; physical
+              behavior remains unverified. App-launch and display controls depend
+              on your desktop shortcuts.
             </p>
           </section>
         )}
@@ -591,8 +606,13 @@ export default function App() {
         {page === "Macros" && (
           <Macros
             macros={profile.macros}
+            uiAssets={originalFrame.assets}
             onChange={(macros) => patch({ macros })}
             onExport={exportText}
+            onWirePreview={native ? (localMacro) => void action(async () => {
+              const report = await call("preview_f75_macro_wire", {localMacro});
+              exportText("F75 macro wire inspection — offline", JSON.stringify(report,null,2));
+            }) : undefined}
             onImport={() => {
               setText("");
               setModal("Import macro");
@@ -609,7 +629,7 @@ export default function App() {
                   onClick={() => {
                     const p = structuredClone(profile);
                     p.id = crypto.randomUUID();
-                    p.name += " copy";
+                    p.name = copyName(p.name);
                     load(p);
                   }}
                 >

@@ -20,6 +20,55 @@ afterEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
 });
+
+it("uses recovered F98 preset controls without enabling physical configuration", async () => {
+  await open();
+  fireEvent.click(modelButton("f98-pro"));
+  await screen.findByRole("combobox", { name: "Model lighting mode" });
+  const mode = screen.getByLabelText("Model lighting mode") as HTMLSelectElement;
+  const brightness = screen.getByLabelText("Model brightness") as HTMLInputElement;
+  const speed = screen.getByLabelText("Model speed") as HTMLInputElement;
+  const color = screen.getByLabelText("Model draft color") as HTMLInputElement;
+  expect(mode.options).toHaveLength(20);
+  expect(brightness.max).toBe("5");
+  expect(speed.max).toBe("5");
+  expect(speed.disabled).toBe(true);
+  expect(color.disabled).toBe(false);
+  for (const value of ["6", "8"]) {
+    fireEvent.change(mode, { target: { value } });
+    expect(color.disabled).toBe(true);
+    expect(speed.disabled).toBe(false);
+  }
+  fireEvent.change(mode, { target: { value: "0" } });
+  expect([brightness, speed, color].every((input) => input.disabled)).toBe(true);
+  fireEvent.change(mode, { target: { value: "7" } });
+  expect([brightness, speed, color].every((input) => !input.disabled)).toBe(true);
+  expect(screen.queryByRole("button", { name: /Read device|upload|apply to hardware/i })).toBeNull();
+});
+
+it("loads a legacy F98 profile without discarding work or silently replacing storage", async () => {
+  const old = newModelDraft("f98-pro", "Legacy F98");
+  old.lighting = null;
+  const key = modelRegistry.find((m) => m.id === old.model_id)!.keys.find((k) => k.usage === 4)!;
+  old.assignments[key.id] = { kind: "keyboard", usage: 5 };
+  old.macros = [{ id: "saved", name: "Keep this", events: [{ kind: "down", key: 4 }, { kind: "up", key: 4 }] }];
+  const text = JSON.stringify([old]);
+  localStorage.setItem("aula-studio-preview-model-profiles", text);
+  const parsed = parseModelDraft(JSON.stringify(old));
+  expect(parsed.id).toBe(old.id);
+  expect(parsed.assignments).toEqual(old.assignments);
+  expect(parsed.macros).toEqual(old.macros);
+  expect(parsed.lighting).toEqual(newModelDraft("f98-pro", "New").lighting);
+  await open();
+  fireEvent.click(modelButton("f98-pro"));
+  await waitFor(() => expect((screen.getByLabelText("Model profile name") as HTMLInputElement).value).toBe(old.name));
+  expect(localStorage.getItem("aula-studio-preview-model-profiles")).toBe(text);
+  fireEvent.click(screen.getByRole("button", { name: "Save local profile" }));
+  await waitFor(() => expect(JSON.parse(localStorage.getItem("aula-studio-preview-model-profiles")!)[0].lighting).toEqual(parsed.lighting));
+  const saved = (await call<any[]>("list_model_profiles"))[0];
+  expect(saved.assignments).toEqual(old.assignments);
+  expect(saved.macros).toEqual(old.macros);
+});
 const open = async () => {
   render(<ModelWorkbench onBack={() => {}} />);
   await screen.findByRole("textbox", { name: "Model profile name" });
@@ -61,7 +110,7 @@ it("opens recovered layouts and leaves unrecovered devices without invented cont
       ).disabled,
     ).toBe(false),
   );
-  fireEvent.click(modelButton("f2088"));
+  fireEvent.click(modelButton("sc620"));
   await screen.findByText("Research entry");
   expect(screen.queryByLabelText("Model brightness")).toBeNull();
   expect(
@@ -100,6 +149,15 @@ it("saves colors and key assignments through separate model storage and exports 
         .value,
     ),
   ).toEqual(saved);
+  await waitFor(() =>
+    expect(
+      (
+        within(dialog).getByRole("button", {
+          name: "Close",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(false),
+  );
   fireEvent.keyDown(document, { key: "Escape" });
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 });
@@ -201,4 +259,32 @@ it("preserves shared identifiers as ambiguous rather than guessing a connected m
   expect(s99.keys.some((k) => k.matrix_index === null)).toBe(true);
   const wrong = { ...newModelDraft("f87", "Local"), model_id: "sc620" };
   expect(() => parseModelDraft(JSON.stringify(wrong))).toThrow(/layout/);
+});
+
+it("opens only the established F2088 positions and keeps unsupported capabilities unavailable", async () => {
+  await open();
+  fireEvent.click(modelButton("f2088"));
+  await waitFor(() =>
+    expect(document.querySelectorAll(".models-keyboard button")).toHaveLength(
+      103,
+    ),
+  );
+  expect(screen.queryByLabelText("Model brightness")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Fn layer" })).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Read device (experimental)" }),
+  ).toBeNull();
+  expect(screen.getByText(/One nonzero-sized RightWin record/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Assignments" }));
+  fireEvent.click(screen.getByRole("button", { name: "A · key-4" }));
+  fireEvent.change(screen.getByLabelText("Model target action"), {
+    target: { value: "5" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Assign locally" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save local profile" }));
+  await waitFor(async () =>
+    expect((await call<any[]>("list_model_profiles"))[0].assignments).toEqual({
+      "key-4": { kind: "keyboard", usage: 5 },
+    }),
+  );
 });

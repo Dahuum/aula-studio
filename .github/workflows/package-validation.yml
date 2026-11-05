@@ -45,5 +45,7 @@ jobs:
         env:
           TEST_IMAGE: ${{ matrix.image }}
           PACKAGE_FORMAT: ${{ matrix.format }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
-          docker run --rm --env AULA_CONTAINER_PACKAGE_TEST=1 --mount "type=bind,src=$PWD/dist/package-test,dst=/packages,readonly" --mount "type=bind,src=$PWD/packaging/linux/package-smoke.sh,dst=/test.sh,readonly" "$TEST_IMAGE" bash /test.sh "$PACKAGE_FORMAT"
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          docker run --rm --env AULA_CONTAINER_PACKAGE_TEST=1 --env "AULA_EXPECTED_VERSION=${RELEASE_TAG#v}" --mount "type=bind,src=$PWD/dist/package-test,dst=/packages,readonly" --mount "type=bind,src=$PWD/packaging/linux/package-smoke.sh,dst=/test.sh,readonly" "$TEST_IMAGE" bash /test.sh "$PACKAGE_FORMAT"
