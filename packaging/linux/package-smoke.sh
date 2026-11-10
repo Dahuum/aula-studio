@@ -45,7 +45,7 @@ try:
     for _ in range(30):
         assert p.poll() is None, 'Application exited before window mapped'
         tree=subprocess.check_output(['xwininfo','-root','-tree'],text=True)
-        if '"AULA F75"' in tree:
+        if '"AULA Studio"' in tree:
             mapped=True
             break
         time.sleep(.5)

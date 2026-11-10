@@ -3,6 +3,15 @@ on:
   workflow_dispatch:
   push:
     branches: [feature/cross-platform-desktop]
+    paths:
+      - app/**
+      - crates/**
+      - Cargo.*
+      - third_party/**
+      - scripts/package-desktop.py
+      - scripts/native-platform-smoke.py
+      - scripts/prepare-public-release.py
+      - .github/workflows/native-desktop.yml
 permissions:
   contents: read
 env:
@@ -45,7 +54,10 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: native-v1-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}
+          key: native-v2-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            native-v2-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}-
+            native-v1-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}
       - name: Install release-tested Rust and target
         shell: bash
         run: |
@@ -100,4 +112,4 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: native-v1-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}
+          key: native-v2-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
