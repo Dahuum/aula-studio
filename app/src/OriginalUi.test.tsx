@@ -14,7 +14,7 @@ it("retains all twenty official lighting choices with working mode selection",as
     expect(document.querySelector('.original-app')?.getAttribute('data-page')).toBe(effect.id===21?"Per-Key RGB":"Lighting");
     expect(screen.getByRole("button",{name:effect.name}).getAttribute("aria-pressed")).toBe("true");
   }
-});
+}, 15000); // Twenty complete React renders also run on slower native Intel CI.
 it("keeps RGB, hex and preset controls synchronized and saves the real local draft",async()=>{
   await open();fireEvent.click(screen.getByRole("button",{name:"Preset #ff0000"}));
   fireEvent.change(screen.getByLabelText("G value"),{target:{value:"128"}});
