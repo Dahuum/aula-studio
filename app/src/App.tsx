@@ -943,7 +943,7 @@ export default function App() {
           <section className="panel">
             <h2>AULA Studio 0.4.2</h2>
             <p>
-              An independent native Linux workspace for the original F75.
+              An independent native desktop workspace for the original F75.
               Original code is MIT licensed; this project is not affiliated with
               AULA.
             </p>

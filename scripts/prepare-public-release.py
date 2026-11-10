@@ -17,12 +17,12 @@ import tarfile
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_DOCS = {'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
+PUBLIC_DOCS = {'CROSS_PLATFORM.md', 'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
                'INSTALLATION.md', 'LIMITATIONS.md', 'MEDIA_BINDINGS.md', 'OFFICIAL_FEATURES.md',
                'MOUSE_BINDINGS.md', 'ORIGINAL_UI.md', 'PROTOCOL.md', 'REVERSE_ENGINEERING.md', 'ROADMAP.md', 'SOURCES.md',
                'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md', 'DOWNLOAD_CATALOG.md', 'MULTI_MODEL_RESEARCH.md', 'MODEL_WORKSPACES.md', 'F2088_RESEARCH.md', 'F98_RESEARCH.md', 'MACRO_FORMAT.md', 'F87_READ_CONTRACT.md', 'G5_READ_CONTRACTS.md', 'S75_READ_CONTRACT.md', 'F75_MATRIX_FRAMING.md'}
 ROOT_FILES = {'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'CHANGELOG.md',
-              'Cargo.toml', 'Cargo.lock', '.gitignore', '.dockerignore'}
+              'Cargo.toml', 'Cargo.lock', '.gitignore', '.dockerignore', '.gitattributes'}
 SECRET = re.compile(rb'(?:gh[pousr]_[A-Za-z0-9_]{25,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)')
 
 
@@ -30,6 +30,8 @@ def allowed(name):
     p = Path(name)
     if '..' in p.parts or p.is_absolute():
         return False
+    if name in {'app/src-tauri/icons/icon.ico', 'app/src-tauri/icons/icon.icns'}:
+        return True
     if name in ROOT_FILES:
         return True
     if name.startswith('docs/'):
@@ -40,8 +42,10 @@ def allowed(name):
         return True
     if name.startswith('fixtures/'):
         return name in {'fixtures/keymap/f87-factory-base.bin', 'fixtures/keymap/f87-factory-fn.bin', 'fixtures/keymap/LICENSE'}
+    if name.startswith('site/vendor/'):
+        return len(p.parts)==3 and p.name in {'motion.js','LICENSE-motion.txt','sources.json'}
     if name.startswith('site/fonts/'):
-        return p.name in {'instrument-sans.woff2', 'ibm-plex-mono.woff2', 'OFL-instrument-sans.txt', 'OFL-ibm-plex-mono.txt', 'sources.json'} and len(p.parts) == 3
+        return p.name in {'instrument-sans.woff2', 'ibm-plex-mono.woff2', 'OFL-instrument-sans.txt', 'OFL-ibm-plex-mono.txt', 'sources.json', 'space-grotesk.woff2', 'OFL-space-grotesk.txt'} and len(p.parts) == 3
     if name.startswith('third_party/licenses/'):
         return p.suffix in {'.txt', '.json'} and len(p.parts) == 3
     if name in {'packaging/linux/Dockerfile', 'packaging/linux/package-smoke.sh', 'packaging/aur/PKGBUILD', 'packaging/aur/.SRCINFO'}:
@@ -111,10 +115,10 @@ def archive(directory, destination, root_name):
                     tar.addfile(info, io.BytesIO(data))
 
 
-def native_notices():
+def native_notices(target="x86_64-unknown-linux-gnu"):
     """Bundle cached upstream license/notice texts; never include cache paths."""
     raw = subprocess.check_output(['cargo', 'metadata', '--locked', '--offline', '--format-version=1',
-                                   '--filter-platform', 'x86_64-unknown-linux-gnu'], cwd=ROOT, text=True)
+                                   '--filter-platform', target], cwd=ROOT, text=True)
     meta = json.loads(raw)
     packages = {p['id']: p for p in meta['packages']}
     nodes = {n['id']: n for n in meta['resolve']['nodes']}

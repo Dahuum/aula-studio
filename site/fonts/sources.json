@@ -26,5 +26,19 @@
     "sha256": "91c25c350d3cac39da2736d74f7ba37ef648f5237a4e330a240615bc8d8c4360",
     "bytes": 4360,
     "modified": false
+  },
+  {
+    "file": "space-grotesk.woff2",
+    "source": "https://raw.githubusercontent.com/floriankarsten/space-grotesk/03507d024a01282884232081fc6011c09ff4e849/fonts/woff2/SpaceGrotesk%5Bwght%5D.woff2",
+    "sha256": "8e085aa438094f11487a836652edd5c054fa6a96f63fc7c282105ee3a4b08c07",
+    "bytes": 49256,
+    "modified": false
+  },
+  {
+    "file": "OFL-space-grotesk.txt",
+    "source": "https://raw.githubusercontent.com/floriankarsten/space-grotesk/03507d024a01282884232081fc6011c09ff4e849/OFL.txt",
+    "sha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72",
+    "bytes": 4495,
+    "modified": false
   }
 ]

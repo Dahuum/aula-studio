@@ -93,10 +93,12 @@ version = "0.6.0"
 dependencies = [
  "aula-models",
  "aula-protocol",
+ "aula-service",
  "fs2",
  "hidapi",
  "serde",
  "thiserror 2.0.21",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -123,6 +125,7 @@ name = "aula-service"
 version = "0.6.0"
 dependencies = [
  "aula-protocol",
+ "dirs",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
@@ -137,6 +140,7 @@ dependencies = [
  "aula-protocol",
  "aula-service",
  "base64 0.23.1",
+ "getrandom 0.3.4",
  "gtk",
  "libc",
  "serde",

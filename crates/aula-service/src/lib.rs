@@ -343,6 +343,7 @@ pub fn atomic_write(path: &Path, data: &[u8]) -> Result<()> {
         f.write_all(data)?;
         f.sync_all()?;
         fs::rename(&temp, path)?;
+        #[cfg(unix)]
         if let Some(parent) = path.parent() {
             fs::File::open(parent)?.sync_all()?
         }
@@ -357,6 +358,13 @@ pub fn data_dir() -> PathBuf {
     if let Some(p) = std::env::var_os("AULA_DATA_DIR") {
         return p.into();
     }
+    #[cfg(not(target_os = "linux"))]
+    {
+        dirs::data_local_dir()
+            .unwrap_or_else(home_dir)
+            .join("aula-studio")
+    }
+    #[cfg(target_os = "linux")]
     xdg_base(
         std::env::var_os("XDG_DATA_HOME"),
         home_dir().join(".local/share"),
@@ -368,6 +376,13 @@ pub fn config_dir() -> PathBuf {
     if let Some(p) = std::env::var_os("AULA_DATA_DIR") {
         return p.into();
     }
+    #[cfg(not(target_os = "linux"))]
+    {
+        dirs::config_dir()
+            .unwrap_or_else(home_dir)
+            .join("aula-studio")
+    }
+    #[cfg(target_os = "linux")]
     xdg_base(
         std::env::var_os("XDG_CONFIG_HOME"),
         home_dir().join(".config"),
@@ -375,14 +390,25 @@ pub fn config_dir() -> PathBuf {
     .join("aula-studio")
 }
 fn home_dir() -> PathBuf {
-    PathBuf::from(std::env::var_os("HOME").unwrap_or_default())
+    dirs::home_dir().unwrap_or_default()
 }
+#[cfg(target_os = "linux")]
 fn xdg_base(setting: Option<std::ffi::OsString>, fallback: PathBuf) -> PathBuf {
     setting
         .map(PathBuf::from)
         .filter(|p| p.is_absolute())
         .unwrap_or(fallback)
 }
+/// Per-user cache/lock location on all supported desktop operating systems.
+pub fn cache_dir() -> PathBuf {
+    if let Some(root) = std::env::var_os("AULA_DATA_DIR") {
+        return PathBuf::from(root).join("cache");
+    }
+    dirs::cache_dir()
+        .unwrap_or_else(home_dir)
+        .join("aula-studio")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

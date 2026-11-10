@@ -194,7 +194,7 @@ fn do_read(demo: bool, mock: Option<Profile>) -> Result<Value> {
         );
     }
     let devices = aula_hid::discover().map_err(|e| e.to_string())?;
-    let d=devices.iter().find(|d|d.read_supported).ok_or("No supported, accessible wired configuration interface. Inspect Diagnostics and udev permissions.")?;
+    let d=devices.iter().find(|d|d.read_supported).ok_or("No supported, accessible wired configuration interface. Inspect Diagnostics and OS device permissions.")?;
     let snapshot = aula_hid::read_snapshot(&d.path).map_err(|e| e.to_string())?;
     let lighting = aula_protocol::ConfigRegion::parse(&snapshot.config)
         .and_then(|c| c.lighting())
@@ -551,7 +551,7 @@ fn diagnostics(s: State<AppState>) -> Result<Value> {
     let status = get_status(s)?;
     let writes_enabled = std::env::var_os("AULA_DISABLE_HARDWARE_WRITES").is_none();
     Ok(
-        json!({"application":"AULA Studio","version":env!("CARGO_PKG_VERSION"),"status":status,"safety":{"hardware_writes_enabled":writes_enabled,"hardware_write_policy":"single-use reviewed settings/mapping transactions only; no automatic writes","firmware_operations":false},"protocol":"ID 0x06; wired 520-byte feature report; bounded reads and backed-up lighting transactions","physical_validation":"See docs/TESTING.md for this release's actual read evidence."}),
+        json!({"application":"AULA Studio","version":env!("CARGO_PKG_VERSION"),"platform":std::env::consts::OS,"status":status,"safety":{"hardware_writes_enabled":writes_enabled,"hardware_write_policy":"single-use reviewed settings/mapping transactions only; no automatic writes","firmware_operations":false},"protocol":"ID 0x06; wired 520-byte feature report; bounded reads and backed-up lighting transactions","physical_validation":"See docs/TESTING.md for this release's actual read evidence."}),
     )
 }
 fn main() {

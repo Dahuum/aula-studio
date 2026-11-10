@@ -5,7 +5,6 @@ use aula_service::{atomic_write, new_id, Profile};
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
-    io::Read,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -26,9 +25,7 @@ impl PendingLighting {
     }
     pub fn insert(&mut self, prepared: PreparedLighting) -> Result<String> {
         let mut bytes = [0; 32];
-        std::fs::File::open("/dev/urandom")
-            .and_then(|mut f| f.read_exact(&mut bytes))
-            .map_err(|e| e.to_string())?;
+        getrandom::fill(&mut bytes).map_err(|e| e.to_string())?;
         let token = bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
         self.clear();
         self.plans.insert(token.clone(), prepared);

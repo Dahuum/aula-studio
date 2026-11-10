@@ -38,6 +38,7 @@ def build(include_binaries=False, repository_url=None, site_url=None):
     for name in ['style.css', 'app.js']:
         shutil.copyfile(ROOT / 'site' / name, out / name)
     shutil.copytree(ROOT / 'site/fonts', out / 'assets/fonts')
+    shutil.copytree(ROOT / 'site/vendor', out / 'assets/vendor')
     shutil.copyfile(ROOT / 'docs/assets/mark.svg', out / 'assets/mark.svg')
     for name in ['lighting-demo.png', 'macros-demo.png']:
         shutil.copyfile(ROOT / 'docs/screenshots' / name, out / 'assets' / name)
@@ -47,7 +48,10 @@ def build(include_binaries=False, repository_url=None, site_url=None):
     for f in [Path(report['source_archive']), *([Path(report['binary_archive'])] if report['binary_archive'] else []), Path(report['source_archive']).parent / 'SHA256SUMS']:
         shutil.copyfile(f, out / 'downloads' / f.name)
     download = Path(report['binary_archive'] or report['source_archive']).name
-    values = {'VERSION': version, 'DOWNLOAD_URL': 'downloads/'+download,
+    values = {'VERSION': version, 'LINUX_VERSION':'0.5.0',
+              'WINDOWS_URL':project.get('repository_url','https://github.com/Dahuum/aula-studio')+'/releases/download/v'+version+'/aula-studio-'+version+'-windows-x86_64-setup.exe',
+              'MAC_ARM_URL':project.get('repository_url','https://github.com/Dahuum/aula-studio')+'/releases/download/v'+version+'/aula-studio-'+version+'-macos-aarch64.dmg',
+              'MAC_INTEL_URL':project.get('repository_url','https://github.com/Dahuum/aula-studio')+'/releases/download/v'+version+'/aula-studio-'+version+'-macos-x86_64.dmg', 'DOWNLOAD_URL': 'downloads/'+download,
               'DOWNLOAD_LABEL': 'Download for Linux' if include_binaries else 'Download source',
               'DOWNLOAD_NOTE': 'x86_64 GNU/Linux · glibc 2.36+ · GTK / WebKitGTK libraries required.' if include_binaries else 'MIT source archive · build instructions included.'}
     if project.get('repository_url') and not include_binaries:
