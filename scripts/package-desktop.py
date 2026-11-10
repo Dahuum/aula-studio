@@ -13,7 +13,7 @@ import tomllib
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
-VERSION=tomllib.loads((ROOT/'Cargo.toml').read_text())['workspace']['package']['version']
+VERSION=tomllib.loads((ROOT/'Cargo.toml').read_text(encoding='utf-8'))['workspace']['package']['version']
 
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -22,14 +22,14 @@ def prepare(target):
     exporter=importlib.util.module_from_spec(spec);spec.loader.exec_module(exporter)
     out=ROOT/'dist/native-resources';out.mkdir(parents=True,exist_ok=True)
     notices,count=exporter.native_notices(target)
-    (out/'THIRD_PARTY_NOTICES.txt').write_text(notices)
+    (out/'THIRD_PARTY_NOTICES.txt').write_text(notices, encoding='utf-8')
     shutil.copyfile(ROOT/'LICENSE',out/'LICENSE.txt')
     exe='aula.exe' if 'windows' in target else 'aula'
     cli=ROOT/'target'/target/'release'/exe
     assert cli.is_file(), 'Build our native CLI before preparing resources'
     config={'bundle':{'resources':{str(out/'THIRD_PARTY_NOTICES.txt'):'THIRD_PARTY_NOTICES.txt',
             str(out/'LICENSE.txt'):'LICENSE.txt',str(cli):exe}}}
-    (out/'tauri-native.json').write_text(json.dumps(config,indent=2)+'\n')
+    (out/'tauri-native.json').write_text(json.dumps(config,indent=2)+'\n', encoding='utf-8')
     print(json.dumps({'resources':str(out),'dependency_notices':count}))
 
 def package(target):
@@ -69,7 +69,7 @@ def package(target):
     report={'version':VERSION,'target':target,'platform':platform.system(),'architecture':arch,
             'signed':False,'notarized':False,'physical_validation':False,'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
             'binary_sha256':digest(binary),'cli_sha256':digest(cli),'files':{p.name:digest(p) for p in [installer,portable]}}
-    (out/(prefix+'-build.json')).write_text(json.dumps(report,indent=2)+'\n')
+    (out/(prefix+'-build.json')).write_text(json.dumps(report,indent=2)+'\n', encoding='utf-8')
     (out/'SHA256SUMS').write_text(''.join(digest(p)+'  '+p.name+'\n' for p in sorted(out.iterdir()) if p.is_file() and p.name!='SHA256SUMS'))
     print(json.dumps(report,indent=2))
 

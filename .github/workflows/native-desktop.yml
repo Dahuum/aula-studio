@@ -10,6 +10,7 @@ on:
       - third_party/**
       - scripts/package-desktop.py
       - scripts/native-platform-smoke.py
+      - scripts/windows-installer-smoke.py
       - scripts/prepare-public-release.py
       - .github/workflows/native-desktop.yml
 permissions:
@@ -18,6 +19,7 @@ env:
   AULA_DISABLE_HARDWARE_WRITES: '1'
   CARGO_TERM_COLOR: always
   CARGO_BUILD_JOBS: '2'
+  PYTHONUTF8: '1'
 jobs:
   native:
     strategy:
@@ -88,6 +90,9 @@ jobs:
           fi
           python scripts/native-platform-smoke.py --binary "$app" --cli "$cli" --output dist/native-smoke
       - run: python scripts/package-desktop.py package --target ${{ matrix.target }}
+      - name: Install, launch and uninstall our own Windows package
+        if: runner.os == 'Windows'
+        run: python scripts/windows-installer-smoke.py
       - name: Upload tested native packages and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -102,6 +107,9 @@ jobs:
             dist/native-desktop/SHA256SUMS
             dist/native-smoke/*.json
             dist/native-smoke/*.log
+            dist/windows-installer-smoke/result.json
+            dist/windows-installer-smoke/launch/result.json
+            dist/windows-installer-smoke/launch/app.log
           if-no-files-found: warn
           retention-days: 14
       - name: Retain reproducible native build cache

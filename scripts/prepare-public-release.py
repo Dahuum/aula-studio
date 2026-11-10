@@ -118,7 +118,7 @@ def archive(directory, destination, root_name):
 def native_notices(target="x86_64-unknown-linux-gnu"):
     """Bundle cached upstream license/notice texts; never include cache paths."""
     raw = subprocess.check_output(['cargo', 'metadata', '--locked', '--offline', '--format-version=1',
-                                   '--filter-platform', target], cwd=ROOT, text=True)
+                                   '--filter-platform', target], cwd=ROOT, encoding='utf-8')
     meta = json.loads(raw)
     packages = {p['id']: p for p in meta['packages']}
     nodes = {n['id']: n for n in meta['resolve']['nodes']}
@@ -130,7 +130,7 @@ def native_notices(target="x86_64-unknown-linux-gnu"):
             continue
         reached.add(current)
         queue.extend(d['pkg'] for d in nodes.get(current, {}).get('deps', []))
-    retained = json.loads((ROOT / 'third_party/licenses/index.json').read_text())
+    retained = json.loads((ROOT / 'third_party/licenses/index.json').read_text(encoding='utf-8'))
     chunks = ['AULA Studio third-party notices\n\nOriginal project code: MIT (see LICENSE).\n'
               f'This inventory conservatively includes resolved native build dependencies for {target}. '
               'Upstream packages are unmodified; source is available at the versioned crates.io URLs below.\n'
@@ -156,21 +156,21 @@ def native_notices(target="x86_64-unknown-linux-gnu"):
         for f in sorted(files):
             if f.stat().st_size > 200000:
                 raise ValueError(f'Unexpectedly large license file for {p["name"]}')
-            chunks.append('\n--- '+f.name+' ---\n'+f.read_text(errors='replace')+'\n')
+            chunks.append('\n--- '+f.name+' ---\n'+f.read_text(encoding='utf-8', errors='replace')+'\n')
     for name in ['react', 'react-dom', 'scheduler', '@tauri-apps/api']:
         directory = ROOT / 'app/node_modules' / name
         if not directory.exists():
             raise ValueError('Install frontend dependencies before exporting binaries')
-        p = json.loads((directory / 'package.json').read_text())
+        p = json.loads((directory / 'package.json').read_text(encoding='utf-8'))
         chunks.append(f"\n{'='*72}\n{name} {p['version']}\n")
         for f in sorted(directory.iterdir()):
             if f.is_file() and f.name.lower().startswith(('license', 'notice', 'copyright')):
-                chunks.append('\n--- '+f.name+' ---\n'+f.read_text(errors='replace')+'\n')
+                chunks.append('\n--- '+f.name+' ---\n'+f.read_text(encoding='utf-8', errors='replace')+'\n')
     sysroot = Path(subprocess.check_output(['rustc', '--print', 'sysroot'], text=True).strip())
     for filename in ['LICENSE-MIT', 'LICENSE-APACHE', 'COPYRIGHT']:
         f = sysroot / 'share/doc/rust' / filename
         if f.is_file():
-            chunks.append(f'\nRust toolchain {filename}\n'+f.read_text(errors='replace')+'\n')
+            chunks.append(f'\nRust toolchain {filename}\n'+f.read_text(encoding='utf-8', errors='replace')+'\n')
     if missing:
         raise ValueError('Missing cached dependency license texts: '+', '.join(missing))
     return '\n'.join(chunks), count
