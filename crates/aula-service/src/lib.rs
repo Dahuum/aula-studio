@@ -636,6 +636,7 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
     #[test]
+    #[cfg(target_os = "linux")]
     fn relative_xdg_roots_use_the_standard_fallback() {
         let fallback = PathBuf::from("/user/.config");
         assert_eq!(
@@ -647,6 +648,16 @@ mod tests {
             xdg_base(Some("/custom/config".into()), fallback),
             PathBuf::from("/custom/config")
         );
+    }
+    #[test]
+    #[cfg(not(target_os = "linux"))]
+    fn native_user_directories_are_absolute_and_app_scoped() {
+        if std::env::var_os("AULA_DATA_DIR").is_none() {
+            for path in [data_dir(), config_dir(), cache_dir()] {
+                assert!(path.is_absolute());
+                assert_eq!(path.file_name().unwrap(), "aula-studio");
+            }
+        }
     }
     #[test]
     fn oversized_save_preserves_readable_original() {

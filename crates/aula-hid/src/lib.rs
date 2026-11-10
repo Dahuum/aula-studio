@@ -522,20 +522,27 @@ fn descriptor_feature_length(path: &str) -> std::result::Result<Option<usize>, S
 static OPERATION: Mutex<()> = Mutex::new(());
 fn process_lock() -> Result<std::fs::File> {
     #[cfg(not(target_os = "linux"))]
-    return lock_in_dir(&aula_service::cache_dir());
+    {
+        lock_in_dir(&aula_service::cache_dir())
+    }
     #[cfg(target_os = "linux")]
-    let base = std::env::var_os("XDG_RUNTIME_DIR")
-        .map(std::path::PathBuf::from)
-        .filter(|p| p.is_absolute())
-        .or_else(|| {
-            std::env::var_os("XDG_CACHE_HOME")
-                .map(std::path::PathBuf::from)
-                .filter(|p| p.is_absolute())
-        })
-        .or_else(|| std::env::var_os("HOME").map(|p| std::path::PathBuf::from(p).join(".cache")))
-        .ok_or_else(|| HidError::Device("No user runtime/cache directory for HID lock".into()))?;
-    #[cfg(target_os = "linux")]
-    lock_in_dir(&base.join("aula-studio"))
+    {
+        let base = std::env::var_os("XDG_RUNTIME_DIR")
+            .map(std::path::PathBuf::from)
+            .filter(|p| p.is_absolute())
+            .or_else(|| {
+                std::env::var_os("XDG_CACHE_HOME")
+                    .map(std::path::PathBuf::from)
+                    .filter(|p| p.is_absolute())
+            })
+            .or_else(|| {
+                std::env::var_os("HOME").map(|p| std::path::PathBuf::from(p).join(".cache"))
+            })
+            .ok_or_else(|| {
+                HidError::Device("No user runtime/cache directory for HID lock".into())
+            })?;
+        lock_in_dir(&base.join("aula-studio"))
+    }
 }
 fn lock_in_dir(dir: &Path) -> Result<std::fs::File> {
     let mut builder = std::fs::DirBuilder::new();

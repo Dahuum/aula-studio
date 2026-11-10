@@ -37,6 +37,15 @@ jobs:
           node-version: '24'
           cache: npm
           cache-dependency-path: app/package-lock.json
+      - name: Restore native Rust build cache
+        id: rust-cache
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: native-v1-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}
       - name: Install release-tested Rust and target
         shell: bash
         run: |
@@ -73,9 +82,22 @@ jobs:
         with:
           name: native-${{ matrix.target }}
           path: |
-            dist/native-desktop/*.*
+            dist/native-desktop/*.exe
+            dist/native-desktop/*.dmg
+            dist/native-desktop/*.zip
+            dist/native-desktop/*.gz
+            dist/native-desktop/*-build.json
             dist/native-desktop/SHA256SUMS
             dist/native-smoke/*.json
             dist/native-smoke/*.log
           if-no-files-found: warn
           retention-days: 14
+      - name: Retain reproducible native build cache
+        if: always() && steps.rust-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: native-v1-${{ matrix.target }}-rust1931-${{ hashFiles('Cargo.lock') }}
