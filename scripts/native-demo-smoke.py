@@ -22,6 +22,7 @@ parser.add_argument('--binary', type=Path, help='Validate this packaged native e
 parser.add_argument('--xdg', action='store_true', help='Exercise standard XDG config/data paths under the isolated test directory')
 parser.add_argument('--dev', action='store_true', help='Use the locally built debug binary with the loopback Vite development server')
 parser.add_argument('--fallback', action='store_true', help='Disable private original artwork for standalone rendering validation')
+parser.add_argument('--no-screenshots', action='store_true', help='Skip image capture when the container WebKit snapshot endpoint hangs; retain every workflow assertion')
 options = parser.parse_args()
 BINARY = options.binary.resolve() if options.binary else ROOT / ('target/debug/aula-studio' if options.dev else 'target/release/aula-studio')
 inputs = list((ROOT / 'crates').rglob('*.rs')) + list((ROOT / 'app/src-tauri').rglob('*.rs')) + ([] if options.dev else list((ROOT / 'app/dist').rglob('*')))
@@ -119,6 +120,8 @@ def arrow(label, key):
 
 
 def screenshot(name):
+    if options.no_screenshots:
+        return
     request('POST', f'/session/{sid}/execute/async', {
         'script': 'const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));', 'args': []})
     (OUT / name).write_bytes(base64.b64decode(request('GET', f'/session/{sid}/screenshot')))
@@ -352,8 +355,8 @@ try:
     request('POST', f'/session/{sid}/window/rect', original_rect)
     request('POST', f'/session/{sid}/execute/async', {
         'script': 'const done=arguments[arguments.length-1];window.scrollTo(0,0);document.body.scrollTop=0;document.documentElement.scrollTop=0;document.querySelector("main").scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));', 'args': []})
-    (OUT / 'native-demo.png').write_bytes(base64.b64decode(request('GET', f'/session/{sid}/screenshot')))
-    result = {'status': 'passed', 'binary_sha256': hashlib.sha256(BINARY.read_bytes()).hexdigest(), 'physical_writes': False, 'storage': str(DATA), 'preferences': str(preferences),
+    screenshot('native-demo.png')
+    result = {'status': 'passed', 'binary_sha256': hashlib.sha256(BINARY.read_bytes()).hexdigest(), 'physical_writes': False, 'screenshots_captured': not options.no_screenshots, 'storage': str(DATA), 'preferences': str(preferences),
               'storage_mode': 'XDG' if options.xdg else 'AULA_DATA_DIR',
               'artwork': 'private original assets' if assets['assets'] else 'independent standalone graphics',
               'headless_rendering': 'Xvfb; WebKit compositing disabled to avoid software-renderer snapshot hangs',

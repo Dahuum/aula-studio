@@ -32,8 +32,8 @@ jobs:
               # Namespace sandbox override is limited to this disposable,
               # device-free Docker test, never a shipped app preference.
               export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
-              dbus-run-session -- python3 scripts/native-demo-smoke.py --fallback
-              dbus-run-session -- python3 scripts/native-model-smoke.py --fallback
+              dbus-run-session -- python3 scripts/native-demo-smoke.py --fallback --no-screenshots
+              dbus-run-session -- python3 scripts/native-model-smoke.py --fallback --no-screenshots
               python3 scripts/package-linux.py
             '
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -46,8 +46,10 @@ jobs:
             dist/linux/*.tar.gz
             dist/linux/SHA256SUMS
             dist/linux/build-report.json
-            analysis/native-demo-smoke/**/result.json
-            analysis/native-model-smoke/**/result.json
+            analysis/native-demo-smoke/**/*.json
+            analysis/native-demo-smoke/**/*.log
+            analysis/native-model-smoke/**/*.json
+            analysis/native-model-smoke/**/*.log
           if-no-files-found: warn
           retention-days: 14
   install:

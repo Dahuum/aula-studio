@@ -2,6 +2,7 @@ use serde_json::json;
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str){
+ Some("--version"|"-V")=>println!("AULA Studio {}",env!("CARGO_PKG_VERSION")),
  Some("macro-preview")=>{let path=args.get(1).ok_or("Usage: aula macro-preview EXPORTED_LOCAL_MACRO.json (offline only)")?;let file=std::fs::File::open(path).map_err(|e|e.to_string())?;let mut text=String::new();use std::io::Read;file.take(512*1024+1).read_to_string(&mut text).map_err(|e|e.to_string())?;let p=aula_service::macro_preview::preview_json(&text)?;println!("{}",serde_json::to_string_pretty(&p).map_err(|e|e.to_string())?)},
  Some("read-model")=>{let path=args.get(1).ok_or("Usage: aula read-model HID_PATH f87|f87-pro-010b|f87-pro-wired|f108|h108")?;let model=args.get(2).ok_or("An explicitly supported resource model id is required; no USB-ID inference")?;let c=aula_hid::read_model_capture(path,model).map_err(|e|e.to_string())?;println!("{}",serde_json::to_string_pretty(&c).map_err(|e|e.to_string())?)},
  Some("models")=>println!("{}",serde_json::to_string_pretty(aula_models::registry()?).unwrap()),

@@ -9,6 +9,7 @@ from pathlib import Path
 import platform
 import subprocess
 import time
+import tomllib
 
 def visible_window(pid):
     if os.name == 'nt':
@@ -66,7 +67,11 @@ def main():
     data = out / 'data'; data.mkdir()
     (data / 'preferences.json').write_text(json.dumps({'demo_mode': True, 'reduce_motion': True}))
     env = dict(os.environ, AULA_DATA_DIR=str(data), AULA_DISABLE_HARDWARE_WRITES='1', AULA_NO_ORIGINAL_SKIN='1')
-    version = subprocess.check_output([str(cli), '--version'], env=env, text=True, timeout=30).strip()
+    version = subprocess.check_output([str(cli), '--version'], env=env, encoding='utf-8', timeout=30).strip()
+    expected = tomllib.loads((Path(__file__).resolve().parents[1] / 'Cargo.toml').read_text(encoding='utf-8'))['workspace']['package']['version']
+    assert version == 'AULA Studio ' + expected, 'CLI version differs from source'
+    diagnostics = json.loads(subprocess.check_output([str(cli), 'diagnostics'], env=env, encoding='utf-8', timeout=30))
+    assert diagnostics['version'] == expected and diagnostics['hardware_writes_enabled'] is False
     models = json.loads(subprocess.check_output([str(cli), 'models'], env=env, text=True, timeout=30))
     devices = json.loads(subprocess.check_output([str(cli), 'devices'], env=env, text=True, timeout=30))
     assert len(models) >= 10 and isinstance(devices, list)
