@@ -37,13 +37,14 @@ jobs:
               npm --prefix app run build
               cargo fetch --locked
               cargo build --locked --release -p aula-studio -p aula-cli
+              python3 scripts/package-linux.py
+              collect_evidence() { python3 scripts/collect-linux-smoke.py --include-failures; }
+              trap collect_evidence EXIT
               # Namespace sandbox override is limited to this disposable,
               # device-free Docker test, never a shipped app preference.
               export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
               dbus-run-session -- python3 scripts/native-demo-smoke.py --fallback --no-screenshots
               dbus-run-session -- python3 scripts/native-model-smoke.py --fallback --no-screenshots
-              python3 scripts/package-linux.py
-              python3 scripts/collect-linux-smoke.py
             '
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
@@ -55,7 +56,7 @@ jobs:
             dist/linux/*.tar.gz
             dist/linux/SHA256SUMS
             dist/linux/build-report.json
-            dist/linux-smoke/**/result.json
+            dist/linux-smoke/**/*.json
             dist/linux-smoke/**/driver.log
           if-no-files-found: warn
           retention-days: 14

@@ -229,8 +229,15 @@ try:
             click('Color selected keys locally')
             assert not execute('return [...document.querySelectorAll("button")].some(b=>b.textContent.trim()==="Read device (experimental)")')
         text_input('//input[@aria-label="Model profile name"]',model['name']+' native QA')
+        wait(lambda: execute('return document.querySelector(arguments[0]).value', ['input[aria-label="Model profile name"]']) == model['name']+' native QA')
         click('Save local profile')
-        wait(lambda: any(p['name']==model['name']+' native QA' for p in ok('list_model_profiles')))
+        try:
+            wait(lambda: any(p['name']==model['name']+' native QA' for p in ok('list_model_profiles')))
+        except AssertionError:
+            print(json.dumps({'failed_model': model['id'], 'expected_name': model['name']+' native QA',
+                              'saved_profiles': ok('list_model_profiles'),
+                              'visible_state': execute('return document.body.innerText').strip()[-9000:]}, ensure_ascii=True), flush=True)
+            raise
         assert execute('return !document.body.innerText.includes("Unapplied local edits")')
         if model['id'] in ['f108', 'h108']:
             profile = next(p for p in ok('list_model_profiles') if p['model_id'] == model['id'])
