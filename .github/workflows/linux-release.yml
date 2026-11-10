@@ -7,6 +7,7 @@ on:
       - .github/workflows/linux-release.yml
       - packaging/linux/**
       - scripts/package-linux.py
+      - scripts/collect-linux-smoke.py
 permissions:
   contents: read
 env:
@@ -35,6 +36,7 @@ jobs:
               dbus-run-session -- python3 scripts/native-demo-smoke.py --fallback --no-screenshots
               dbus-run-session -- python3 scripts/native-model-smoke.py --fallback --no-screenshots
               python3 scripts/package-linux.py
+              python3 scripts/collect-linux-smoke.py
             '
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
@@ -46,10 +48,8 @@ jobs:
             dist/linux/*.tar.gz
             dist/linux/SHA256SUMS
             dist/linux/build-report.json
-            analysis/native-demo-smoke/**/*.json
-            analysis/native-demo-smoke/**/*.log
-            analysis/native-model-smoke/**/*.json
-            analysis/native-model-smoke/**/*.log
+            dist/linux-smoke/**/result.json
+            dist/linux-smoke/**/driver.log
           if-no-files-found: warn
           retention-days: 14
   install:
@@ -78,11 +78,11 @@ jobs:
           TEST_IMAGE: ${{ matrix.image }}
           PACKAGE_FORMAT: ${{ matrix.format }}
         run: |
-          cd dist/package-test/dist/linux
+          cd dist/package-test/linux
           sha256sum --check SHA256SUMS
           cd "$GITHUB_WORKSPACE"
           version=$(python3 -c 'import tomllib;print(tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"])')
           docker run --rm --env AULA_CONTAINER_PACKAGE_TEST=1 --env "AULA_EXPECTED_VERSION=$version" \
-            --mount "type=bind,src=$PWD/dist/package-test/dist/linux,dst=/packages,readonly" \
+            --mount "type=bind,src=$PWD/dist/package-test/linux,dst=/packages,readonly" \
             --mount "type=bind,src=$PWD/packaging/linux/package-smoke.sh,dst=/test.sh,readonly" \
             "$TEST_IMAGE" bash /test.sh "$PACKAGE_FORMAT"
