@@ -6,7 +6,7 @@ Original ANSI AULA F75 configuration is wired USB only. Installing on more distr
 
 ## Windows native preview
 
-Windows x86_64 builds are being validated by the native build workflow. Only use a version whose installer and checksum actually appear in [Releases](https://github.com/Dahuum/aula-studio/releases). The intended file is `aula-studio-0.6.0-windows-x86_64-setup.exe`; a portable ZIP includes the GUI, `aula.exe` diagnostics CLI and notices.
+Windows x86_64 native previews use the native build workflow. Only use a version whose installer and checksum actually appear in [Releases](https://github.com/Dahuum/aula-studio/releases). The installer is `aula-studio-0.6.0-windows-x86_64-setup.exe`; a portable ZIP includes the GUI, `aula.exe` diagnostics CLI and notices.
 
 The NSIS installer installs for the current user. It uses Microsoft WebView2, which the Tauri installer checks. No AULA Windows driver, Wine, Node or Rust is required for the packaged app. Preview packages have no publisher code signature, so Windows may show a reputation warning; inspect the source and release checksum before choosing to run one. Do not disable system-wide protection.
 
@@ -16,7 +16,7 @@ Windows physical USB configuration has not been validated. Device access require
 
 ## macOS native preview
 
-Separate disk images target Apple Silicon (`aarch64`) and Intel (`x86_64`), macOS 13 or newer. They are undergoing native-runner validation; only use actual assets from the release. Open the matching DMG, drag **AULA Studio** into Applications, then launch it. No Wine, Node or Rust is required. A separate CLI tarball is supplied for diagnostics.
+Separate disk images target Apple Silicon (`aarch64`) and Intel (`x86_64`), macOS 13 or newer. They use native-runner validation; only use actual assets from the release. Open the matching DMG, drag **AULA Studio** into Applications, then launch it. No Wine, Node or Rust is required. A separate CLI tarball is supplied for diagnostics.
 
 These previews are **not Developer-ID signed or notarized**. The native tests do not reproduce Gatekeeper quarantine on a downloaded file. Review [Apple's instructions for opening a trusted app](https://support.apple.com/en-us/102445); managed Macs may prohibit this preview. Global Gatekeeper changes and quarantine-removal shell commands are not required installation steps.
 
@@ -32,15 +32,15 @@ Run `npm --prefix app ci`, `npm --prefix app run build`, then `cargo build --loc
 
 ## Downloads and verification
 
-Get files from [the project's GitHub Releases](https://github.com/Dahuum/aula-studio/releases), not a similarly named npm/system package. Download the package for your distribution and `SHA256SUMS` into the same directory. Version 0.5.0 files are:
+Get files from [the project's GitHub Releases](https://github.com/Dahuum/aula-studio/releases), not a similarly named npm/system package. Download the package for your distribution and `SHA256SUMS` into the same directory. Version 0.6.0 Linux files are:
 
 | File | Purpose |
 | --- | --- |
-| `aula-studio-0.5.0-1-x86_64.pkg.tar.zst` | Arch package |
-| `aula-studio_0.5.0_amd64.deb` | Debian-family package |
-| `aula-studio-0.5.0-1.x86_64.rpm` | Fedora-family package |
-| `aula-studio-0.5.0-linux-x86_64.tar.gz` | Portable directory using system runtime libraries |
-| `aula-studio-0.5.0-source.tar.gz` | Source and build instructions |
+| `aula-studio-0.6.0-1-x86_64.pkg.tar.zst` | Arch package |
+| `aula-studio_0.6.0_amd64.deb` | Debian-family package |
+| `aula-studio-0.6.0-1.x86_64.rpm` | Fedora-family package |
+| `aula-studio-0.6.0-linux-x86_64.tar.gz` | Portable directory using system runtime libraries |
+| `aula-studio-0.6.0-source.tar.gz` | Source and build instructions |
 
 ```sh
 sha256sum --check --ignore-missing SHA256SUMS
@@ -53,7 +53,7 @@ Confirm every downloaded file you intend to use reports **OK**, with no mismatch
 After downloading and verifying the Arch package:
 
 ```sh
-sudo pacman -U ./aula-studio-0.5.0-1-x86_64.pkg.tar.zst
+sudo pacman -U ./aula-studio-0.6.0-1-x86_64.pkg.tar.zst
 aula-studio
 ```
 
@@ -68,7 +68,7 @@ Remove the native Arch package with `sudo pacman -R aula-studio` (or `aula-studi
 Debian **12+**, Ubuntu **24.04+**, and derivatives based on them can provide the required glibc/WebKitGTK runtime. Older distributions are not covered by this binary. Install the verified local package using apt so it resolves dependencies:
 
 ```sh
-sudo apt install ./aula-studio_0.5.0_amd64.deb
+sudo apt install ./aula-studio_0.6.0_amd64.deb
 aula-studio
 ```
 
@@ -81,7 +81,7 @@ Remove with `sudo apt remove aula-studio`. There is no hosted apt repository or 
 Use a Fedora release with WebKitGTK 4.1 and glibc 2.36+. Install the verified local RPM:
 
 ```sh
-sudo dnf install ./aula-studio-0.5.0-1.x86_64.rpm
+sudo dnf install ./aula-studio-0.6.0-1.x86_64.rpm
 aula-studio
 ```
 
@@ -92,8 +92,8 @@ Dependencies include `gtk3`, `webkit2gtk4.1`, `systemd-libs`, `libgcc`, `libstdc
 The tarball uses system libraries, not a bundled WebKit. Extract it and run:
 
 ```sh
-tar -xf aula-studio-0.5.0-linux-x86_64.tar.gz
-./aula-studio-0.5.0-linux-x86_64/bin/aula-studio
+tar -xf aula-studio-0.6.0-linux-x86_64.tar.gz
+./aula-studio-0.6.0-linux-x86_64/bin/aula-studio
 ```
 
 Install the GTK 3/WebKitGTK 4.1/libudev/appindicator runtime appropriate to your distribution. Check dependencies with `ldd .../bin/aula-studio`; every required library must resolve. The CLI is `.../bin/aula`. There is no installation into system directories or automatic desktop/udev integration with this format. Optional manual integration is described below.

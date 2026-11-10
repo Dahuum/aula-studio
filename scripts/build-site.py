@@ -48,7 +48,7 @@ def build(include_binaries=False, repository_url=None, site_url=None):
     for f in [Path(report['source_archive']), *([Path(report['binary_archive'])] if report['binary_archive'] else []), Path(report['source_archive']).parent / 'SHA256SUMS']:
         shutil.copyfile(f, out / 'downloads' / f.name)
     download = Path(report['binary_archive'] or report['source_archive']).name
-    values = {'VERSION': version, 'LINUX_VERSION':'0.5.0',
+    values = {'VERSION': version, 'LINUX_VERSION':version,
               'WINDOWS_URL':project.get('repository_url','https://github.com/Dahuum/aula-studio')+'/releases/download/v'+version+'/aula-studio-'+version+'-windows-x86_64-setup.exe',
               'MAC_ARM_URL':project.get('repository_url','https://github.com/Dahuum/aula-studio')+'/releases/download/v'+version+'/aula-studio-'+version+'-macos-aarch64.dmg',
               'MAC_INTEL_URL':project.get('repository_url','https://github.com/Dahuum/aula-studio')+'/releases/download/v'+version+'/aula-studio-'+version+'-macos-x86_64.dmg', 'DOWNLOAD_URL': 'downloads/'+download,

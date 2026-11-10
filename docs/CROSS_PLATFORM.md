@@ -1,6 +1,6 @@
 # Native desktop platforms
 
-The cross-platform port is under validation. Windows and macOS packages must be built and launched on their native runners before download links are published. Native runner testing does not establish physical AULA compatibility on those operating systems.
+Native desktop previews share the same original Rust/TypeScript application. Packages are built and launched on native runners before download links are published. Native runner testing does not establish physical AULA compatibility on Windows or macOS. See [the validation record](TESTING.md) for exact scope and limits.
 
 ## Architecture and safeguards
 
@@ -40,3 +40,7 @@ python scripts/package-desktop.py prepare --target TARGET
 From `app/`, run `npm run tauri build -- --target TARGET --bundles nsis --config ../dist/native-resources/tauri-native.json` on Windows, or substitute `--bundles app,dmg` on macOS. From the repository root, `python scripts/package-desktop.py package --target TARGET` creates canonical filenames, target-specific notices and SHA256SUMS in `dist/native-desktop/`. The workflow additionally runs native-window and package lifecycle checks. The CI-only installer scripts deliberately refuse to install on a normal workstation.
 
 The Linux workflow builds inside Debian12 and tests actual packaged binaries on clean Debian, Ubuntu and Fedora installations in isolated containers. It never mounts USB devices, host displays, home directories or secrets.
+
+## Release evidence
+
+The [test record](TESTING.md) links the native and Linux pipelines and distinguishes window/installer checks from physical-device evidence. The release `VALIDATION.json` lists exact build commits, binary hashes, targets and scope; `SHA256SUMS` covers downloadable files. macOS may carry an ad-hoc runtime signature, which is not a Developer ID publisher signature or notarization.

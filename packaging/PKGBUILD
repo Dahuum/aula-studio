@@ -1,14 +1,15 @@
 # Run from packaging after ../scripts/build-release.sh.
 pkgname=aula-studio
-pkgver=0.5.0
+pkgver=0.6.0
 pkgrel=1
 pkgdesc='Native AULA F75 configuration with reviewed HID writes and original-layout UI'
 arch=('x86_64')
 options=('!debug' '!strip')
 license=('MIT')
+url='https://github.com/Dahuum/aula-studio'
 depends=('webkit2gtk-4.1' 'gtk3' 'libudev.so' 'libayatana-appindicator')
 source=("aula-studio-${pkgver}-linux-x86_64.tar.gz")
-sha256sums=('29a7ccee9c57419bc17b73ac400fe47a843ac6ab29a4ff4bc5bf944551cf1d7e')
+sha256sums=('01c56ccb7365e595f3c0e7250382fab69d63c4a0ef26bd96d256b179e28ca78e')
 package() {
  local stage="$srcdir/aula-studio-${pkgver}-linux-x86_64"
  install -Dm755 "$stage/bin/aula-studio" "$pkgdir/usr/bin/aula-studio"
