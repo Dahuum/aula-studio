@@ -79,6 +79,19 @@ def element(xpath):
 def click(xpath):
     target=element(xpath)
     execute('arguments[0].scrollIntoView({block:"center",behavior:"instant"})', [{'element-6066-11e4-a52e-4f735466cecf':target}])
+    previous = None
+    steady = 0
+    def ready():
+        nonlocal previous, steady
+        state = execute('''
+          const e=arguments[0], r=e.getBoundingClientRect(), hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+          let visible=true;for(let p=e;p;p=p.parentElement){const s=getComputedStyle(p);if(Number(s.opacity)<.99||s.visibility==='hidden')visible=false;}
+          return {ready:visible&&!e.disabled&&r.width>0&&r.height>0&&!!hit&&(hit===e||e.contains(hit)),rect:[r.x,r.y,r.width,r.height].map(v=>Math.round(v*10)/10)};
+        ''', [{'element-6066-11e4-a52e-4f735466cecf':target}])
+        steady = steady + 1 if state['ready'] and state['rect'] == previous else 0
+        previous = state['rect']
+        return steady >= 2
+    wait(ready)
     request('POST', f'/session/{sid}/element/{target}/click', {})
 
 
@@ -114,6 +127,20 @@ try:
     assert execute('return document.querySelector(".keycap").style.getPropertyValue("--key-hue")') == '82'
     click('//button[@data-effect="ripple"]')
     assert execute('return document.getElementById("keyboard-object").dataset.effect') == 'ripple'
+    execute('''
+      window.__aulaQaRevealSeen=false;
+      if(!matchMedia("(prefers-reduced-motion: reduce)").matches){
+        const deadline=performance.now()+15000;
+        function observe(){
+          for(const e of document.querySelectorAll(".download-row")){
+            const r=e.getBoundingClientRect();
+            if(r.width&&r.height&&r.top<innerHeight&&r.bottom>0&&e.getAnimations().some(a=>a.playState==="running"&&a.effect.getKeyframes().some(k=>Number(k.opacity)===0))){window.__aulaQaRevealSeen=true;return;}
+          }
+          if(performance.now()<deadline)requestAnimationFrame(observe);
+        }
+        requestAnimationFrame(observe);
+      }
+    ''')
     for os_name in ['windows', 'macos', 'linux']:
         click('//*[@id="os-'+os_name+'"]')
         assert execute('return !document.getElementById(arguments[0]).hidden', ['downloads-'+os_name])
@@ -131,7 +158,7 @@ try:
       } else {
         const deadline=performance.now()+2500;
         function check() {
-          if(target.getAnimations().some(a=>a.effect.getKeyframes().some(k=>Number(k.opacity)===0))) return done(true);
+          if(window.__aulaQaRevealSeen||target.getAnimations().some(a=>a.effect.getKeyframes().some(k=>Number(k.opacity)===0))) return done(true);
           if(performance.now()>deadline) return done(false);
           requestAnimationFrame(check);
         }
