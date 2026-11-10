@@ -11,6 +11,7 @@ on:
       - scripts/package-desktop.py
       - scripts/native-platform-smoke.py
       - scripts/windows-installer-smoke.py
+      - scripts/macos-installer-smoke.py
       - scripts/prepare-public-release.py
       - .github/workflows/native-desktop.yml
 permissions:
@@ -93,6 +94,9 @@ jobs:
       - name: Install, launch and uninstall our own Windows package
         if: runner.os == 'Windows'
         run: python scripts/windows-installer-smoke.py
+      - name: Verify DMG and launch its copied application
+        if: runner.os == 'macOS'
+        run: python scripts/macos-installer-smoke.py --target ${{ matrix.target }}
       - name: Upload tested native packages and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -110,6 +114,9 @@ jobs:
             dist/windows-installer-smoke/result.json
             dist/windows-installer-smoke/launch/result.json
             dist/windows-installer-smoke/launch/app.log
+            dist/macos-installer-smoke/result.json
+            dist/macos-installer-smoke/launch/result.json
+            dist/macos-installer-smoke/launch/app.log
           if-no-files-found: warn
           retention-days: 14
       - name: Retain reproducible native build cache

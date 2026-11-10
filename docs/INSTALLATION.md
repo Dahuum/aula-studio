@@ -4,6 +4,32 @@ Binary packages target **x86_64 GNU/Linux**, glibc **2.36 or newer**, GTK 3 and 
 
 Original ANSI AULA F75 configuration is wired USB only. Installing on more distributions does not expand keyboard or wireless support. See [hardware support](FEATURE_MATRIX.md).
 
+## Windows native preview
+
+Windows x86_64 builds are being validated by the native build workflow. Only use a version whose installer and checksum actually appear in [Releases](https://github.com/Dahuum/aula-studio/releases). The intended file is `aula-studio-0.6.0-windows-x86_64-setup.exe`; a portable ZIP includes the GUI, `aula.exe` diagnostics CLI and notices.
+
+The NSIS installer installs for the current user. It uses Microsoft WebView2, which the Tauri installer checks. No AULA Windows driver, Wine, Node or Rust is required for the packaged app. Preview packages have no publisher code signature, so Windows may show a reputation warning; inspect the source and release checksum before choosing to run one. Do not disable system-wide protection.
+
+Open AULA Studio from Start. Use `./aula.exe diagnostics` from the extracted portable directory for CLI diagnostics. Remove the app through Windows Settings → Apps. Local data is under `%LOCALAPPDATA%\aula-studio` and preferences under `%APPDATA%\aula-studio`; uninstalling the application does not require deleting profiles.
+
+Windows physical USB configuration has not been validated. Device access requires the same descriptor, interface, exact model identity and connection-epoch safeguards as Linux; missing metadata disables configuration. Do not install a replacement keyboard driver.
+
+## macOS native preview
+
+Separate disk images target Apple Silicon (`aarch64`) and Intel (`x86_64`), macOS 13 or newer. They are undergoing native-runner validation; only use actual assets from the release. Open the matching DMG, drag **AULA Studio** into Applications, then launch it. No Wine, Node or Rust is required. A separate CLI tarball is supplied for diagnostics.
+
+These previews are **not Developer-ID signed or notarized**. The native tests do not reproduce Gatekeeper quarantine on a downloaded file. Review [Apple's instructions for opening a trusted app](https://support.apple.com/en-us/102445); managed Macs may prohibit this preview. Global Gatekeeper changes and quarantine-removal shell commands are not required installation steps.
+
+macOS 15 is the CI test platform; macOS 13/14 need additional owner testing. Physical USB behavior on macOS remains unverified. The shared IOHID backend avoids exclusively seizing the keyboard. Close other configurators and use the wired connection; unsupported metadata fails closed.
+
+Profiles/preferences live under `~/Library/Application Support/aula-studio`, cache under `~/Library/Caches/aula-studio`. To uninstall, quit and remove AULA Studio from Applications. Keep those profile directories unless you deliberately want to remove saved drafts.
+
+## Native source builds on Windows and macOS
+
+Install Rust 1.93.1, Node 24/npm and Python 3.11+. Windows builds require Microsoft C++ Build Tools with the C++ desktop workload and WebView2; macOS builds require Xcode and its macOS SDK. Follow the [official Tauri prerequisites](https://v2.tauri.app/start/prerequisites/). These development tools are not runtime dependencies of packaged downloads.
+
+Run `npm --prefix app ci`, `npm --prefix app run build`, then `cargo build --locked --release -p aula-studio -p aula-cli`. On Windows launch `./target/release/aula-studio.exe`; on macOS `./target/release/aula-studio`. Native installer reproduction is in [CROSS_PLATFORM.md](CROSS_PLATFORM.md).
+
 ## Downloads and verification
 
 Get files from [the project's GitHub Releases](https://github.com/Dahuum/aula-studio/releases), not a similarly named npm/system package. Download the package for your distribution and `SHA256SUMS` into the same directory. Version 0.5.0 files are:

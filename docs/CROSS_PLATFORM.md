@@ -24,3 +24,19 @@ Windows previews are unsigned; macOS previews are not Developer-ID signed or not
 .github/workflows/native-desktop.yml builds on Windows2022/x86_64 and macOS15/AppleSilicon plus Intel. It runs frontend and Rust tests, formatting/Clippy, builds the native CLI and installer, then uses scripts/native-platform-smoke.py to verify the actual GUI window and read-only CLI in isolated demo storage with hardware writes disabled. Artifacts include checksums/build metadata and native smoke evidence. Our own compiled applications/installers may be executed for QA; supplied AULA Windows binaries remain excluded and are never executed.
 
 scripts/package-desktop.py includes license and actual target dependency notices in the installers and portable diagnostics packages. No installer or extracted vendor asset is included in the public source snapshot. Native build/window tests, offline protocol tests and physical verification are distinct evidence levels. Current verified hardware evidence remains the earlier Linux wired theme/brightness observations; Windows/macOS physical configuration remains unverified.
+
+## Reproduce native installers
+
+Run on the matching operating system with the prerequisites above. Replace TARGET with `x86_64-pc-windows-msvc`, `aarch64-apple-darwin` or `x86_64-apple-darwin`.
+
+```sh
+npm --prefix app ci
+npm --prefix app run build
+cargo fetch --locked
+cargo build --release --locked --target TARGET -p aula-cli
+python scripts/package-desktop.py prepare --target TARGET
+```
+
+From `app/`, run `npm run tauri build -- --target TARGET --bundles nsis --config ../dist/native-resources/tauri-native.json` on Windows, or substitute `--bundles app,dmg` on macOS. From the repository root, `python scripts/package-desktop.py package --target TARGET` creates canonical filenames, target-specific notices and SHA256SUMS in `dist/native-desktop/`. The workflow additionally runs native-window and package lifecycle checks. The CI-only installer scripts deliberately refuse to install on a normal workstation.
+
+The Linux workflow builds inside Debian12 and tests actual packaged binaries on clean Debian, Ubuntu and Fedora installations in isolated containers. It never mounts USB devices, host displays, home directories or secrets.
