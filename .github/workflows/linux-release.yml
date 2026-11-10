@@ -4,6 +4,13 @@ on:
   push:
     branches: [feature/cross-platform-desktop]
     paths:
+      - app/**
+      - crates/**
+      - Cargo.*
+      - third_party/**
+      - scripts/native-demo-smoke.py
+      - scripts/native-model-smoke.py
+      - scripts/prepare-public-release.py
       - .github/workflows/linux-release.yml
       - packaging/linux/**
       - scripts/package-linux.py

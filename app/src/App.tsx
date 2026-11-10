@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { version } from "../package.json";
 import { call, native } from "./api";
 import { Keyboard } from "./Keyboard";
 import { Macros } from "./Macros";
@@ -934,14 +935,15 @@ export default function App() {
             <pre>{diagnostic || JSON.stringify(status, null, 2)}</pre>
             <p className="muted">
               Device paths and descriptors are included; serial numbers and
-              unrelated devices are omitted. For access errors, install the
-              supplied narrow uaccess rule.
+              unrelated devices are omitted. On Linux, use the supplied narrow
+              uaccess rule for access errors. On Windows and macOS, check device
+              access and close other configurators.
             </p>
           </section>
         )}
         {page === "About" && (
           <section className="panel">
-            <h2>AULA Studio 0.4.2</h2>
+            <h2>AULA Studio {version}</h2>
             <p>
               An independent native desktop workspace for the original F75.
               Original code is MIT licensed; this project is not affiliated with
