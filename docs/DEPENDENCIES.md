@@ -25,3 +25,5 @@ Motion 14.9.1 is self-hosted from its published npm distribution, under MIT. The
 ## macOS notices
 
 The objc2 workspace publishes several crates without their license declaration. The exact upstream `LICENSE.md` at each crate's `.cargo_vcs_info.json` commit is retained under `third_party/licenses/`. The index records those pinned URLs, hashes and crate author metadata. The export retains the upstream SDK-derived-code explanation without rewriting its licensing claims.
+
+The Windows WebView2 wrapper is MIT licensed; its bundled Microsoft WebView2 loader has a separate BSD license. Both the SDK1.0.3800.47 license and notices are retained verbatim and included in Windows THIRD_PARTY_NOTICES. The exact NuGet source/package hash and byte-identical static-loader evidence are recorded in the license index. This does not relicense the SDK as original project code.

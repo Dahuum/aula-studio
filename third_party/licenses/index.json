@@ -231,12 +231,25 @@
   },
   "webview2-com-sys@0.39.1": {
     "files": [
-      "webview2-rs-edc2caf88617-LICENSE.txt"
+      "webview2-rs-edc2caf88617-LICENSE.txt",
+      "Microsoft-WebView2-SDK-1.0.3800.47-LICENSE.txt",
+      "Microsoft-WebView2-SDK-1.0.3800.47-NOTICE.txt"
     ],
     "source": "https://github.com/wravery/webview2-rs/blob/edc2caf886175ccaebe86078c9cfe1ae2a187328/LICENSE",
     "sha256": {
       "webview2-rs-edc2caf88617-LICENSE.txt": "0dcf41516e608bbcb6cdc5229feb7b86fe4a643b85e7df251133c93408fdac73"
     },
-    "note": "Exact upstream workspace MIT license at the published crate cargo_vcs_info commit."
+    "note": "Exact upstream workspace MIT license at the published crate cargo_vcs_info commit.",
+    "sdk": {
+      "name": "Microsoft.Web.WebView2",
+      "version": "1.0.3800.47",
+      "source": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.3800.47/microsoft.web.webview2.1.0.3800.47.nupkg",
+      "package_sha256": "56c9f26bdd07916a2d1949fb58a5c7e434dfa1173577dca879206050c4e718db",
+      "files_sha256": {
+        "Microsoft-WebView2-SDK-1.0.3800.47-LICENSE.txt": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55",
+        "Microsoft-WebView2-SDK-1.0.3800.47-NOTICE.txt": "106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90"
+      },
+      "evidence": "Published crate x64/WebView2LoaderStatic.lib is byte-identical to SDK build/native/x64/WebView2LoaderStatic.lib. SDK version is declared in upstream update-bindings at edc2caf886175ccaebe86078c9cfe1ae2a187328."
+    }
   }
 }

@@ -7,3 +7,4 @@ site/fonts/* -text
 site/vendor/* -text
 # Preserve the exact upstream OFL license, including its original whitespace.
 site/fonts/OFL-space-grotesk.txt whitespace=-blank-at-eol
+third_party/licenses/* -text
