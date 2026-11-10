@@ -63,7 +63,7 @@ export function OriginalNavigation({page,effect,assets,onNavigate,onEffect,demo,
           {image?<img src={image} alt=""/>:<UiIcon kind={item.icon}/>}<span className="sr-only">{item.page}</span>
         </button>;
       })}</nav>
-      <button className="original-more" title="Linux tools" aria-label="More views" aria-expanded={more} onClick={()=>setMore(!more)}><UiIcon kind="more"/></button>
+      <button className="original-more" title="More tools" aria-label="More views" aria-expanded={more} onClick={()=>setMore(!more)}><UiIcon kind="more"/></button>
       {more&&<div className="original-extra-views">{["Models","Diagnostics","About"].map(p=><button key={p} aria-label={p==="Models"?"Device library":p} onClick={()=>{onNavigate(p);setMore(false);}}>{p==="Models"?"Device library":p}</button>)}</div>}
     </aside>
     <section className="original-context" inert={inert} aria-label="Section options">
@@ -71,7 +71,7 @@ export function OriginalNavigation({page,effect,assets,onNavigate,onEffect,demo,
       {lighting&&<div className="original-effects">{[...effects.filter(e=>e.id!==0),...effects.filter(e=>e.id===0)].map(e=><button key={e.id} className={effect===e.id?"active":""} aria-pressed={effect===e.id} aria-label={e.name} onClick={()=>onEffect(e.id)}>{originalEffectNames[e.id]}</button>)}</div>}
       {mapping&&<p className="original-context-hint">Select a key to edit its assignment.<br/><small>Changes stay local until you confirm a hardware write.</small></p>}
       {page==="Macros"&&<div id="original-macro-list"/>}
-      {!["Lighting","Per-Key RGB","Key Remapping","Fn Layers","Macros"].includes(page)&&<p className="original-context-hint">AULA F75<br/><small>Native Linux configuration</small></p>}
+      {!["Lighting","Per-Key RGB","Key Remapping","Fn Layers","Macros"].includes(page)&&<p className="original-context-hint">AULA F75<br/><small>Native keyboard configuration</small></p>}
       <div className="original-context-bottom"><span>{demo?"Demo device":connected?"Wired USB":"Disconnected"}</span><button disabled={busy} onClick={toggleDemo}>{demo?"Exit demo mode":"Enter demo mode"}</button></div>
     </section>
   </>;

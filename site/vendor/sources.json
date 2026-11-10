@@ -1,0 +1,24 @@
+[
+  {
+    "file": "motion.js",
+    "package": "motion",
+    "version": "14.9.1",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/motion/-/motion-14.9.1.tgz",
+    "archive_member": "package/dist/motion.js",
+    "sha256": "3991e7354cfe92302c5217d042db21acadf91863877a193625e737b493e8d1ad",
+    "bytes": 179222,
+    "modified": false
+  },
+  {
+    "file": "LICENSE-motion.txt",
+    "package": "motion",
+    "version": "14.9.1",
+    "license": "MIT",
+    "source": "https://registry.npmjs.org/motion/-/motion-14.9.1.tgz",
+    "archive_member": "package/LICENSE.md",
+    "sha256": "1bf0dc3f7727723e5a032ed12164a47cf92c05204cb1a3485f123c24e2833ed1",
+    "bytes": 1100,
+    "modified": false
+  }
+]

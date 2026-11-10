@@ -1,4 +1,4 @@
-//! Conservative Linux HID access. Enumerating devices never opens a HID handle.
+//! Conservative native HID access. Discovery never sends a device report.
 //! Physical writes are restricted to reviewed, typed configuration transactions.
 use aula_protocol::{ColorTable, ConfigRegion, FeatureReport, ProtocolError, Region, REPORT_SIZE};
 use serde::{Deserialize, Serialize};
@@ -70,7 +70,8 @@ fn known(vid: u16, pid: u16) -> bool {
     )
 }
 
-/// Read-only metadata discovery. Serial numbers are intentionally omitted.
+/// Read-only metadata/descriptor discovery. No HID report is sent.
+/// Native Windows/macOS read OS descriptors through a non-seizing vendor handle.
 pub fn discover() -> Result<Vec<DeviceSummary>> {
     let api = hidapi::HidApi::new().map_err(|e| HidError::Device(e.to_string()))?;
     let mut result = Vec::new();
@@ -81,14 +82,18 @@ pub fn discover() -> Result<Vec<DeviceSummary>> {
         let path = info.path().to_string_lossy().into_owned();
         let feature_report_bytes = descriptor_feature_length(&path).ok().flatten();
         let wired = info.vendor_id() == 0x258a && info.product_id() == 0x010c;
-        let supported =
-            wired && info.interface_number() == 1 && feature_report_bytes == Some(REPORT_SIZE);
+        let supported = wired
+            && info.interface_number() == 1
+            && info.usage_page() == 0xff00
+            && info.usage() == 1
+            && feature_report_bytes == Some(REPORT_SIZE)
+            && connection_identity(&path).is_some();
         let reason = if supported {
             "G5 family descriptor matches report06, shared by several AULA models. Exact original-F75 identity is checked before bounded configuration reads or reviewed writes; a USB ID alone is not model identification."
         } else if !wired {
             "Receiver detected. Wireless configuration framing has not been verified for this hardware."
         } else {
-            "Configuration requires interface 1 and a descriptor declaring a 520-byte feature report 06."
+            "Configuration requires the wired vendor interface1, report06/520B descriptor and an OS connection epoch."
         };
         result.push(DeviceSummary {
             path: path.clone(),
@@ -114,6 +119,7 @@ pub fn discover() -> Result<Vec<DeviceSummary>> {
     result.dedup_by(|a, b| a.path == b.path && a.usage_page == b.usage_page && a.usage == b.usage);
     Ok(result)
 }
+#[cfg(target_os = "linux")]
 fn descriptor_feature_length(path: &str) -> std::result::Result<Option<usize>, String> {
     let name = Path::new(path)
         .file_name()
@@ -468,39 +474,95 @@ pub fn commit_mapping(
         mapping_transaction::execute_mapping(t, &plan)
     })
 }
+#[cfg(target_os = "linux")]
 fn connection_identity(path: &str) -> Option<String> {
     let name = Path::new(path).file_name()?;
     std::fs::canonicalize(Path::new("/sys/class/hidraw").join(name).join("device"))
         .ok()
         .map(|p| p.to_string_lossy().into_owned())
 }
+#[cfg(target_os = "macos")]
+fn connection_identity(path: &str) -> Option<String> {
+    // hidapi obtains this attach-specific ID from IORegistryEntryGetRegistryEntryID.
+    let id = path.strip_prefix("DevSrvsID:")?.parse::<u64>().ok()?;
+    (id != 0).then(|| format!("ioreg:{id}"))
+}
+#[cfg(target_os = "windows")]
+fn connection_identity(path: &str) -> Option<String> {
+    windows_connection::identity(path)
+}
+#[cfg(target_os = "windows")]
+mod windows_connection;
+
+#[cfg(not(target_os = "linux"))]
+fn descriptor_feature_length(path: &str) -> std::result::Result<Option<usize>, String> {
+    let api = hidapi::HidApi::new().map_err(|e| e.to_string())?;
+    let info = api
+        .device_list()
+        .find(|d| {
+            d.path().to_bytes() == path.as_bytes()
+                && d.vendor_id() == 0x258a
+                && d.product_id() == 0x010c
+                && d.interface_number() == 1
+                && d.usage_page() == 0xff00
+                && d.usage() == 1
+        })
+        .ok_or("Not the wired vendor configuration collection")?;
+    // Only reads the OS descriptor. macos-shared-device prevents keyboard seizure.
+    let device = info.open_device(&api).map_err(|e| e.to_string())?;
+    let mut bytes = [0u8; 4097];
+    let count = device
+        .get_report_descriptor(&mut bytes)
+        .map_err(|e| e.to_string())?;
+    if count == 0 || count > 4096 {
+        return Err("Truncated or oversized HID descriptor".into());
+    }
+    Ok(feature_report_lengths(&bytes[..count])?.get(&6).copied())
+}
 static OPERATION: Mutex<()> = Mutex::new(());
 fn process_lock() -> Result<std::fs::File> {
-    let base = std::env::var_os("XDG_RUNTIME_DIR")
-        .map(std::path::PathBuf::from)
-        .filter(|p| p.is_absolute())
-        .or_else(|| {
-            std::env::var_os("XDG_CACHE_HOME")
-                .map(std::path::PathBuf::from)
-                .filter(|p| p.is_absolute())
-        })
-        .or_else(|| std::env::var_os("HOME").map(|p| std::path::PathBuf::from(p).join(".cache")))
-        .ok_or_else(|| HidError::Device("No user runtime/cache directory for HID lock".into()))?;
-    lock_in_dir(&base.join("aula-studio"))
+    #[cfg(not(target_os = "linux"))]
+    {
+        lock_in_dir(&aula_service::cache_dir())
+    }
+    #[cfg(target_os = "linux")]
+    {
+        let base = std::env::var_os("XDG_RUNTIME_DIR")
+            .map(std::path::PathBuf::from)
+            .filter(|p| p.is_absolute())
+            .or_else(|| {
+                std::env::var_os("XDG_CACHE_HOME")
+                    .map(std::path::PathBuf::from)
+                    .filter(|p| p.is_absolute())
+            })
+            .or_else(|| {
+                std::env::var_os("HOME").map(|p| std::path::PathBuf::from(p).join(".cache"))
+            })
+            .ok_or_else(|| {
+                HidError::Device("No user runtime/cache directory for HID lock".into())
+            })?;
+        lock_in_dir(&base.join("aula-studio"))
+    }
 }
 fn lock_in_dir(dir: &Path) -> Result<std::fs::File> {
-    use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
-    std::fs::DirBuilder::new()
-        .recursive(true)
-        .mode(0o700)
+    let mut builder = std::fs::DirBuilder::new();
+    builder.recursive(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    builder
         .create(dir)
         .map_err(|e| HidError::Device(e.to_string()))?;
-    let f = std::fs::OpenOptions::new()
-        .create(true)
-        .truncate(false)
-        .read(true)
-        .write(true)
-        .mode(0o600)
+    let mut options = std::fs::OpenOptions::new();
+    options.create(true).truncate(false).read(true).write(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let f = options
         .open(dir.join("hid.lock"))
         .map_err(|e| HidError::Device(e.to_string()))?;
     fs2::FileExt::try_lock_exclusive(&f).map_err(|_| HidError::Busy)?;
@@ -560,6 +622,8 @@ fn run_device_checked<T: Send + 'static>(
                         && d.vendor_id() == 0x258a
                         && d.product_id() == 0x010c
                         && d.interface_number() == 1
+                        && d.usage_page() == 0xff00
+                        && d.usage() == 1
                 })
                 .ok_or(HidError::Disconnected)?;
             if descriptor_feature_length(&selected.path).ok().flatten() != Some(REPORT_SIZE) {
@@ -568,6 +632,9 @@ fn run_device_checked<T: Send + 'static>(
             let device = info
                 .open_device(&api)
                 .map_err(|e| HidError::Device(e.to_string()))?;
+            if connection_identity(&selected.path).as_deref() != Some(&selected.connection_id) {
+                return Err(HidError::Disconnected);
+            }
             let mut transport = HidTransport { device, deadline };
             if require_original_f75 {
                 require_f75_identity(transport.read_model_identity()?)?;

@@ -7,7 +7,46 @@
       "https://github.com/dropbox/rust-alloc-no-stdlib/blob/0a81fd6928ea3b33c8cd484aa4575d50ffb98012/LICENSE"
     ]
   },
+  "block2@0.6.2": {
+    "authors_from_crate_metadata": [
+      "Mads Marquart <mads@marquart.dk>"
+    ],
+    "files": [
+      "objc2-workspace-b4167b582b2f-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-b4167b582b2f-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/b4167b582b2f75f9a1be75495c41b765344fd03c/LICENSE.md"
+    ]
+  },
+  "dispatch2@0.3.1": {
+    "authors_from_crate_metadata": [
+      "Mads Marquart <mads@marquart.dk>",
+      "Mary <mary@mary.zone>"
+    ],
+    "files": [
+      "objc2-workspace-8852b424193c-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-8852b424193c-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/8852b424193ca41602281b3d7540d7c8ed51e49a/LICENSE.md"
+    ]
+  },
   "dlopen2@0.8.2": {
+    "files": [
+      "dlopen2-0.8.2-LICENSE.txt"
+    ],
+    "sources": [
+      "https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE"
+    ]
+  },
+  "dlopen2_derive@0.4.3": {
     "files": [
       "dlopen2-0.8.2-LICENSE.txt"
     ],
@@ -25,12 +64,140 @@
       "https://github.com/tauri-apps/libappindicator-rs/blob/eafd1e3682a1247f595410266091e9684021cb6f/LICENSE-APACHE"
     ]
   },
-  "dlopen2_derive@0.4.3": {
+  "objc2-app-kit@0.3.2": {
+    "authors_from_crate_metadata": [],
     "files": [
-      "dlopen2-0.8.2-LICENSE.txt"
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
     ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
     "sources": [
-      "https://github.com/OpenByteDev/dlopen2/blob/cc80e4a0a90d499b677fdf7743699b4b3a43a989/LICENSE"
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2-core-foundation@0.3.2": {
+    "authors_from_crate_metadata": [],
+    "files": [
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2-core-graphics@0.3.2": {
+    "authors_from_crate_metadata": [],
+    "files": [
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2-encode@4.1.0": {
+    "authors_from_crate_metadata": [
+      "Mads Marquart <mads@marquart.dk>"
+    ],
+    "files": [
+      "objc2-workspace-8d214f547736-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-8d214f547736-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/8d214f5477365ffcbcbb7de058c86ed9a518efb7/LICENSE.md"
+    ]
+  },
+  "objc2-exception-helper@0.1.1": {
+    "authors_from_crate_metadata": [
+      "Mads Marquart <mads@marquart.dk>"
+    ],
+    "files": [
+      "objc2-workspace-8d214f547736-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-8d214f547736-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/8d214f5477365ffcbcbb7de058c86ed9a518efb7/LICENSE.md"
+    ]
+  },
+  "objc2-foundation@0.3.2": {
+    "authors_from_crate_metadata": [],
+    "files": [
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2-io-surface@0.3.2": {
+    "authors_from_crate_metadata": [],
+    "files": [
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2-quartz-core@0.3.2": {
+    "authors_from_crate_metadata": [],
+    "files": [
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2-web-kit@0.3.2": {
+    "authors_from_crate_metadata": [],
+    "files": [
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-7b1abfd750a2-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/7b1abfd750a2cacaea71d6a56ecfb83cb7de560b/LICENSE.md"
+    ]
+  },
+  "objc2@0.6.5": {
+    "authors_from_crate_metadata": [
+      "Mads Marquart <mads@marquart.dk>"
+    ],
+    "files": [
+      "objc2-workspace-d7d2fa23ceaa-LICENSE.txt"
+    ],
+    "note": "Exact upstream workspace license declaration; SPDX alternatives and source URLs retained.",
+    "sha256": {
+      "objc2-workspace-d7d2fa23ceaa-LICENSE.txt": "7f976f7e9cb2d87df7230606feb932c3f21ac0e664045a775b600046ff850c54"
+    },
+    "sources": [
+      "https://github.com/madsmtm/objc2/blob/d7d2fa23ceaa5e6096c923b081040e5d81b3b9df/LICENSE.md"
     ]
   },
   "selectors@0.38.0": {
@@ -41,5 +208,48 @@
       "https://www.mozilla.org/media/MPL/2.0/index.txt",
       "https://crates.io/crates/selectors/0.38.0"
     ]
+  },
+  "webview2-com@0.39.1": {
+    "files": [
+      "webview2-rs-edc2caf88617-LICENSE.txt"
+    ],
+    "source": "https://github.com/wravery/webview2-rs/blob/edc2caf886175ccaebe86078c9cfe1ae2a187328/LICENSE",
+    "sha256": {
+      "webview2-rs-edc2caf88617-LICENSE.txt": "0dcf41516e608bbcb6cdc5229feb7b86fe4a643b85e7df251133c93408fdac73"
+    },
+    "note": "Exact upstream workspace MIT license at the published crate cargo_vcs_info commit."
+  },
+  "webview2-com-macros@0.8.1": {
+    "files": [
+      "webview2-rs-dffa41a8a46d-LICENSE.txt"
+    ],
+    "source": "https://github.com/wravery/webview2-rs/blob/dffa41a8a46d3f5565eefbff2de57d38d399f158/LICENSE",
+    "sha256": {
+      "webview2-rs-dffa41a8a46d-LICENSE.txt": "0dcf41516e608bbcb6cdc5229feb7b86fe4a643b85e7df251133c93408fdac73"
+    },
+    "note": "Exact upstream workspace MIT license at the published crate cargo_vcs_info commit."
+  },
+  "webview2-com-sys@0.39.1": {
+    "files": [
+      "webview2-rs-edc2caf88617-LICENSE.txt",
+      "Microsoft-WebView2-SDK-1.0.3800.47-LICENSE.txt",
+      "Microsoft-WebView2-SDK-1.0.3800.47-NOTICE.txt"
+    ],
+    "source": "https://github.com/wravery/webview2-rs/blob/edc2caf886175ccaebe86078c9cfe1ae2a187328/LICENSE",
+    "sha256": {
+      "webview2-rs-edc2caf88617-LICENSE.txt": "0dcf41516e608bbcb6cdc5229feb7b86fe4a643b85e7df251133c93408fdac73"
+    },
+    "note": "Exact upstream workspace MIT license at the published crate cargo_vcs_info commit.",
+    "sdk": {
+      "name": "Microsoft.Web.WebView2",
+      "version": "1.0.3800.47",
+      "source": "https://api.nuget.org/v3-flatcontainer/microsoft.web.webview2/1.0.3800.47/microsoft.web.webview2.1.0.3800.47.nupkg",
+      "package_sha256": "56c9f26bdd07916a2d1949fb58a5c7e434dfa1173577dca879206050c4e718db",
+      "files_sha256": {
+        "Microsoft-WebView2-SDK-1.0.3800.47-LICENSE.txt": "0af8f1b807512aae39c2ac1aa4d0cae65cabecb6fd554b8439a5162a0d6eca55",
+        "Microsoft-WebView2-SDK-1.0.3800.47-NOTICE.txt": "106423785c5b7eba0a8e61d1837f2132e9c828e20ad530f565d981c1df60dd90"
+      },
+      "evidence": "Published crate x64/WebView2LoaderStatic.lib is byte-identical to SDK build/native/x64/WebView2LoaderStatic.lib. SDK version is declared in upstream update-bindings at edc2caf886175ccaebe86078c9cfe1ae2a187328."
+    }
   }
 }

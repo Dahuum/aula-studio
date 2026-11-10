@@ -202,7 +202,7 @@ async function preview<T>(
         platform: navigator.platform,
         notes: [
           "No HID packets are transmitted from this preview.",
-          "Native builds store profiles in XDG data directories.",
+          "Native builds store profiles in OS-standard user data directories.",
         ],
       };
       break;

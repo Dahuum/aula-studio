@@ -1,0 +1,96 @@
+name: Linux baseline packages
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/cross-platform-desktop]
+    paths:
+      - app/**
+      - crates/**
+      - Cargo.*
+      - third_party/**
+      - scripts/native-demo-smoke.py
+      - scripts/native-model-smoke.py
+      - scripts/prepare-public-release.py
+      - .github/workflows/linux-release.yml
+      - packaging/linux/**
+      - scripts/package-linux.py
+      - scripts/collect-linux-smoke.py
+permissions:
+  contents: read
+env:
+  AULA_DISABLE_HARDWARE_WRITES: '1'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Build Debian 12 release environment
+        run: docker build -f packaging/linux/Dockerfile -t aula-baseline .
+      - name: Compile, exercise native GUI and package without USB access
+        run: |
+          docker run --rm --mount "type=bind,src=$PWD,dst=/work" \
+            --env CARGO_BUILD_JOBS=2 --env AULA_DISABLE_HARDWARE_WRITES=1 \
+            aula-baseline bash -euo pipefail -c '
+              npm --prefix app ci
+              npm --prefix app run build
+              cargo fetch --locked
+              cargo build --locked --release -p aula-studio -p aula-cli
+              python3 scripts/package-linux.py
+              collect_evidence() { python3 scripts/collect-linux-smoke.py --include-failures; }
+              trap collect_evidence EXIT
+              # Namespace sandbox override is limited to this disposable,
+              # device-free Docker test, never a shipped app preference.
+              export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1
+              dbus-run-session -- python3 scripts/native-demo-smoke.py --fallback --no-screenshots
+              dbus-run-session -- python3 scripts/native-model-smoke.py --fallback --no-screenshots
+            '
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: linux-debian12-x86_64
+          path: |
+            dist/linux/*.deb
+            dist/linux/*.rpm
+            dist/linux/*.tar.gz
+            dist/linux/SHA256SUMS
+            dist/linux/build-report.json
+            dist/linux-smoke/**/*.json
+            dist/linux-smoke/**/driver.log
+          if-no-files-found: warn
+          retention-days: 14
+  install:
+    needs: build
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: debian:12-slim
+            format: deb
+          - image: ubuntu:24.04
+            format: deb
+          - image: fedora:43
+            format: rpm
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Download this run's Linux packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name linux-debian12-x86_64 --dir dist/package-test
+      - name: Verify, install, launch as normal user and remove
+        env:
+          TEST_IMAGE: ${{ matrix.image }}
+          PACKAGE_FORMAT: ${{ matrix.format }}
+        run: |
+          cd dist/package-test/linux
+          sha256sum --check SHA256SUMS
+          cd "$GITHUB_WORKSPACE"
+          version=$(python3 -c 'import tomllib;print(tomllib.load(open("Cargo.toml","rb"))["workspace"]["package"]["version"])')
+          docker run --rm --env AULA_CONTAINER_PACKAGE_TEST=1 --env "AULA_EXPECTED_VERSION=$version" \
+            --mount "type=bind,src=$PWD/dist/package-test/linux,dst=/packages,readonly" \
+            --mount "type=bind,src=$PWD/packaging/linux/package-smoke.sh,dst=/test.sh,readonly" \
+            "$TEST_IMAGE" bash /test.sh "$PACKAGE_FORMAT"

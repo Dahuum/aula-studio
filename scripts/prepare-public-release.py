@@ -17,12 +17,12 @@ import tarfile
 import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_DOCS = {'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
+PUBLIC_DOCS = {'CROSS_PLATFORM.md', 'ARCHITECTURE.md', 'FEATURE_MATRIX.md', 'HARDWARE_SAFETY.md', 'HARDWARE_VALIDATION.md',
                'INSTALLATION.md', 'LIMITATIONS.md', 'MEDIA_BINDINGS.md', 'OFFICIAL_FEATURES.md',
                'MOUSE_BINDINGS.md', 'ORIGINAL_UI.md', 'PROTOCOL.md', 'REVERSE_ENGINEERING.md', 'ROADMAP.md', 'SOURCES.md',
                'TESTING.md', 'PUBLISHING.md', 'DEPENDENCIES.md', 'MODEL_SUPPORT.md', 'DOWNLOAD_CATALOG.md', 'MULTI_MODEL_RESEARCH.md', 'MODEL_WORKSPACES.md', 'F2088_RESEARCH.md', 'F98_RESEARCH.md', 'MACRO_FORMAT.md', 'F87_READ_CONTRACT.md', 'G5_READ_CONTRACTS.md', 'S75_READ_CONTRACT.md', 'F75_MATRIX_FRAMING.md'}
 ROOT_FILES = {'README.md', 'LICENSE', 'CONTRIBUTING.md', 'SECURITY.md', 'CHANGELOG.md',
-              'Cargo.toml', 'Cargo.lock', '.gitignore', '.dockerignore'}
+              'Cargo.toml', 'Cargo.lock', '.gitignore', '.dockerignore', '.gitattributes'}
 SECRET = re.compile(rb'(?:gh[pousr]_[A-Za-z0-9_]{25,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)')
 
 
@@ -30,6 +30,8 @@ def allowed(name):
     p = Path(name)
     if '..' in p.parts or p.is_absolute():
         return False
+    if name in {'app/src-tauri/icons/icon.ico', 'app/src-tauri/icons/icon.icns'}:
+        return True
     if name in ROOT_FILES:
         return True
     if name.startswith('docs/'):
@@ -40,8 +42,10 @@ def allowed(name):
         return True
     if name.startswith('fixtures/'):
         return name in {'fixtures/keymap/f87-factory-base.bin', 'fixtures/keymap/f87-factory-fn.bin', 'fixtures/keymap/LICENSE'}
+    if name.startswith('site/vendor/'):
+        return len(p.parts)==3 and p.name in {'motion.js','LICENSE-motion.txt','sources.json'}
     if name.startswith('site/fonts/'):
-        return p.name in {'instrument-sans.woff2', 'ibm-plex-mono.woff2', 'OFL-instrument-sans.txt', 'OFL-ibm-plex-mono.txt', 'sources.json'} and len(p.parts) == 3
+        return p.name in {'instrument-sans.woff2', 'ibm-plex-mono.woff2', 'OFL-instrument-sans.txt', 'OFL-ibm-plex-mono.txt', 'sources.json', 'space-grotesk.woff2', 'OFL-space-grotesk.txt'} and len(p.parts) == 3
     if name.startswith('third_party/licenses/'):
         return p.suffix in {'.txt', '.json'} and len(p.parts) == 3
     if name in {'packaging/linux/Dockerfile', 'packaging/linux/package-smoke.sh', 'packaging/aur/PKGBUILD', 'packaging/aur/.SRCINFO'}:
@@ -111,10 +115,10 @@ def archive(directory, destination, root_name):
                     tar.addfile(info, io.BytesIO(data))
 
 
-def native_notices():
+def native_notices(target="x86_64-unknown-linux-gnu"):
     """Bundle cached upstream license/notice texts; never include cache paths."""
     raw = subprocess.check_output(['cargo', 'metadata', '--locked', '--offline', '--format-version=1',
-                                   '--filter-platform', 'x86_64-unknown-linux-gnu'], cwd=ROOT, text=True)
+                                   '--filter-platform', target], cwd=ROOT, encoding='utf-8')
     meta = json.loads(raw)
     packages = {p['id']: p for p in meta['packages']}
     nodes = {n['id']: n for n in meta['resolve']['nodes']}
@@ -126,9 +130,9 @@ def native_notices():
             continue
         reached.add(current)
         queue.extend(d['pkg'] for d in nodes.get(current, {}).get('deps', []))
-    retained = json.loads((ROOT / 'third_party/licenses/index.json').read_text())
+    retained = json.loads((ROOT / 'third_party/licenses/index.json').read_text(encoding='utf-8'))
     chunks = ['AULA Studio third-party notices\n\nOriginal project code: MIT (see LICENSE).\n'
-              'This inventory conservatively includes resolved Linux build dependencies. '
+              f'This inventory conservatively includes resolved native build dependencies for {target}. '
               'Upstream packages are unmodified; source is available at the versioned crates.io URLs below.\n'
               'System GTK/WebKitGTK libraries are not bundled and retain their own licenses.\n']
     missing = []
@@ -136,7 +140,7 @@ def native_notices():
     for p in sorted((packages[i] for i in reached if packages[i].get('source')), key=lambda p: (p['name'], p['version'])):
         count += 1
         directory = Path(p['manifest_path']).parent
-        chunks.append(f"\n{'='*72}\n{p['name']} {p['version']}\nLicense: {p.get('license') or 'see upstream files'}\nSource: https://crates.io/crates/{p['name']}/{p['version']}\n")
+        chunks.append(f"\n{'='*72}\n{p['name']} {p['version']}\nLicense: {p.get('license') or 'see upstream files'}\nAuthors (upstream metadata): {', '.join(p.get('authors', [])) or 'see upstream files'}\nSource: https://crates.io/crates/{p['name']}/{p['version']}\n")
         files = {f for f in directory.iterdir() if f.is_file() and f.name.lower().startswith(('license', 'licence', 'copying', 'notice', 'copyright'))}
         if p.get('license_file'):
             candidate = directory / p['license_file']
@@ -152,21 +156,21 @@ def native_notices():
         for f in sorted(files):
             if f.stat().st_size > 200000:
                 raise ValueError(f'Unexpectedly large license file for {p["name"]}')
-            chunks.append('\n--- '+f.name+' ---\n'+f.read_text(errors='replace')+'\n')
+            chunks.append('\n--- '+f.name+' ---\n'+f.read_text(encoding='utf-8', errors='replace')+'\n')
     for name in ['react', 'react-dom', 'scheduler', '@tauri-apps/api']:
         directory = ROOT / 'app/node_modules' / name
         if not directory.exists():
             raise ValueError('Install frontend dependencies before exporting binaries')
-        p = json.loads((directory / 'package.json').read_text())
+        p = json.loads((directory / 'package.json').read_text(encoding='utf-8'))
         chunks.append(f"\n{'='*72}\n{name} {p['version']}\n")
         for f in sorted(directory.iterdir()):
             if f.is_file() and f.name.lower().startswith(('license', 'notice', 'copyright')):
-                chunks.append('\n--- '+f.name+' ---\n'+f.read_text(errors='replace')+'\n')
+                chunks.append('\n--- '+f.name+' ---\n'+f.read_text(encoding='utf-8', errors='replace')+'\n')
     sysroot = Path(subprocess.check_output(['rustc', '--print', 'sysroot'], text=True).strip())
     for filename in ['LICENSE-MIT', 'LICENSE-APACHE', 'COPYRIGHT']:
         f = sysroot / 'share/doc/rust' / filename
         if f.is_file():
-            chunks.append(f'\nRust toolchain {filename}\n'+f.read_text(errors='replace')+'\n')
+            chunks.append(f'\nRust toolchain {filename}\n'+f.read_text(encoding='utf-8', errors='replace')+'\n')
     if missing:
         raise ValueError('Missing cached dependency license texts: '+', '.join(missing))
     return '\n'.join(chunks), count

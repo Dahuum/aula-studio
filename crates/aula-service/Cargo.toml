@@ -9,3 +9,5 @@ aula-protocol = { path = "../aula-protocol" }
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+
+dirs = "7"

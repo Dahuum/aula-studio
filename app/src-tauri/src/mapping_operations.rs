@@ -5,7 +5,6 @@ use aula_service::{atomic_write, Profile};
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
-    io::Read,
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
@@ -24,9 +23,7 @@ impl PendingMappings {
     }
     pub fn insert(&mut self, p: PreparedMapping) -> Result<String> {
         let mut bytes = [0; 32];
-        std::fs::File::open("/dev/urandom")
-            .and_then(|mut f| f.read_exact(&mut bytes))
-            .map_err(|e| e.to_string())?;
+        getrandom::fill(&mut bytes).map_err(|e| e.to_string())?;
         let token = bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
         self.clear();
         self.0.insert(token.clone(), p);

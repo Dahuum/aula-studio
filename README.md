@@ -2,12 +2,12 @@
 
 # AULA Studio
 
-### Native Linux keyboard software.
+### Native keyboard software for Linux, Windows and macOS.
 
 Native configuration for the original ANSI AULA F75.<br>
-Rust · Tauri · React · Wayland · MIT
+Rust · Tauri · React · Native HID · MIT
 
-**Early access · published v0.5.0 · development v0.6.0 · F75 wired configuration**
+**Early access v0.6.0 · Native desktop previews · F75 wired configuration**
 
 [Website](https://dahuum.github.io/aula-studio/) · [Downloads](https://github.com/Dahuum/aula-studio/releases) · [Get started](#get-started) · [What works](#what-works) · [Documentation](#documentation) · [Contribute](CONTRIBUTING.md)
 
@@ -17,7 +17,7 @@ Rust · Tauri · React · Wayland · MIT
 
 </div>
 
-AULA Studio brings F75 lighting, configuration reads, profiles and local editing tools to a Linux desktop. It uses the existing Linux HID interface: launch as your normal user, without Wine, a VM, a browser configurator or a privileged daemon.
+AULA Studio brings F75 lighting, configuration reads, profiles and local editing tools to your desktop. The Rust backend uses native Linux, Windows and macOS HID interfaces. Launch as your normal user, without Wine, a VM, a browser configurator or a privileged daemon.
 
 This is an independent community project, **not affiliated with AULA**. It is under active development. Hardware coverage is deliberately narrow, and implemented controls are not all physically validated.
 
@@ -34,7 +34,7 @@ This is an independent community project, **not affiliated with AULA**. It is un
 | Onboard macro uploads; wireless configuration | **Unavailable** |
 | Debounce, polling, OS/revision settings and broader shortcut bindings | Under investigation |
 
-**145 passing Rust tests, 76 frontend tests and 16 Python checks in development**, plus native GUI and startup integration checks, are separate from hardware validation. See the [compatibility matrix](docs/FEATURE_MATRIX.md), [test record](docs/TESTING.md) and [remaining work](docs/ROADMAP.md).
+**145 Linux / 142 Windows / 141 macOS Rust tests, 76 frontend tests and 18 Python checks**, plus native GUI and startup integration checks, are separate from hardware validation. See the [compatibility matrix](docs/FEATURE_MATRIX.md), [test record](docs/TESTING.md) and [remaining work](docs/ROADMAP.md).
 
 **Supported target:** original **ANSI F75**, USB wired mode, `258a:010c`, configuration interface 1 with report `0x06` / 520 bytes. Tested development environment: Arch Linux, Hyprland and Wayland. Other F75 variants, ISO layouts, revisions, Bluetooth and receiver configuration are not assumed compatible. Receiver detection alone does not establish wireless configuration support.
 
@@ -42,28 +42,38 @@ This is an independent community project, **not affiliated with AULA**. It is un
 
 Version0.5 adds **Device library**, available from **More views**. It provides model-bound local profiles and editors for F87 variants, F108, H108, S75 Pro, S99 Pro, F108 Pro and F98 Pro. Edit recovered layouts, colors where documented, key assignments and focused local macros without a connected device. Save/import/export/history work through the Rust backend.
 
-**These additional models are offline editors, not hardware-supported keyboards.** Published0.5 disables their device configuration controls and retains research-only entries for F2088 and the acquired mouse packages. Shared USB IDs never establish a model: the F75 controller verifies its exact model identity before configuration access. The development additions are described below.
+**These additional models are offline editors, not hardware-supported keyboards.** Published0.5 disables their device configuration controls and retains research-only entries for F2088 and the acquired mouse packages. Shared USB IDs never establish a model: the F75 controller verifies its exact model identity before configuration access. The 0.6 additions are described below.
 
 We acquired all12 eligible direct Windows packages from the supplied official31-entry catalog and statically analyzed them without executing Windows code. [Model workspaces](docs/MODEL_WORKSPACES.md) · [Download inventory](docs/DOWNLOAD_CATALOG.md) · [REA findings and unresolved protocols](docs/MULTI_MODEL_RESEARCH.md). Onboard uploading and wireless remain unavailable.
 
-## Development branch
+## What changed in 0.6
 
-The local source is **unreleased 0.6.0**; published downloads above remain0.5.0. Development adds experimental wired read-only captures for three exact F87 variants, F108 and H108, private raw exports and local lighting-draft projection. These readers are software-tested, **not physically validated**; new-model writes remain disabled. [F87 contract](docs/F87_READ_CONTRACT.md) · [F108/H108 contracts](docs/G5_READ_CONTRACTS.md). Build with the commands below and run `./target/release/aula-studio`. Synthetic captures are explicitly labeled and do not establish hardware compatibility. Development also adds richer local macro editing and a Rust-backed [offline F75 wire inspector](docs/MACRO_FORMAT.md); hardware macro uploading remains disabled. F2088 now has a [partial103-position local workspace and independent offline lighting codec](docs/F2088_RESEARCH.md), with all device operations disabled.
+Version **0.6.0** adds experimental wired read-only captures for three exact F87 variants, F108 and H108, private raw exports and local lighting-draft projection. These readers are software-tested, **not physically validated**; new-model writes remain disabled. [F87 contract](docs/F87_READ_CONTRACT.md) · [F108/H108 contracts](docs/G5_READ_CONTRACTS.md). Build with the commands below and run `./target/release/aula-studio`. Synthetic captures are explicitly labeled and do not establish hardware compatibility. Development also adds richer local macro editing and a Rust-backed [offline F75 wire inspector](docs/MACRO_FORMAT.md); hardware macro uploading remains disabled. F2088 now has a [partial103-position local workspace and independent offline lighting codec](docs/F2088_RESEARCH.md), with all device operations disabled.
 
 F98 Pro now has [independently recovered lighting definitions and offline codecs](docs/F98_RESEARCH.md):20 presets,0–5 brightness/speed, per-key color drafts and effect-specific disabled controls. Existing F98 local profiles retain their assignments/macros during compatible loading. **F98 hardware access remains disabled**; the read/backup/acknowledgment/recovery contract still needs work.
 
 ## Get started
 
-### Install a native package
+### Pick your platform
+
+| Platform | Package / scope |
+| --- | --- |
+| Linux x86_64 | Arch package, Debian/Ubuntu `.deb`, Fedora `.rpm`, portable tarball |
+| Windows x86_64 | Native current-user NSIS installer and portable ZIP; experimental native preview |
+| macOS Apple Silicon / Intel | Separate native DMGs and CLI archives, macOS 13+; experimental native preview |
+
+Linux remains the physically tested reference platform. Windows packages are unsigned, and Mac packages are not Developer-ID signed or notarized. Native build/window tests do not establish physical USB compatibility. Use only files actually published in [Releases](https://github.com/Dahuum/aula-studio/releases); check [platform installation notes](docs/INSTALLATION.md) and [native build evidence](docs/CROSS_PLATFORM.md).
+
+### Install a Linux native package
 
 Download your package from **[Releases](https://github.com/Dahuum/aula-studio/releases)**, verify it against that release's `SHA256SUMS`, then run:
 
 | Distribution | Install the downloaded package |
 | --- | --- |
-| Arch Linux and compatible derivatives | `sudo pacman -U ./aula-studio-0.5.0-1-x86_64.pkg.tar.zst` |
-| Debian 12+, Ubuntu 24.04+ and compatible Mint releases | `sudo apt install ./aula-studio_0.5.0_amd64.deb` |
-| Fedora with WebKitGTK 4.1 | `sudo dnf install ./aula-studio-0.5.0-1.x86_64.rpm` |
-| Other x86_64 GNU/Linux | Extract the portable tarball and run `./aula-studio-0.5.0-linux-x86_64/bin/aula-studio`; system GTK/WebKitGTK libraries required |
+| Arch Linux and compatible derivatives | `sudo pacman -U ./aula-studio-0.6.0-1-x86_64.pkg.tar.zst` |
+| Debian 12+, Ubuntu 24.04+ and compatible Mint releases | `sudo apt install ./aula-studio_0.6.0_amd64.deb` |
+| Fedora with WebKitGTK 4.1 | `sudo dnf install ./aula-studio-0.6.0-1.x86_64.rpm` |
+| Other x86_64 GNU/Linux | Extract the portable tarball and run `./aula-studio-0.6.0-linux-x86_64/bin/aula-studio`; system GTK/WebKitGTK libraries required |
 
 Then launch **AULA Studio** from the desktop menu or run `aula-studio`. Run it as your regular user. Packages include the desktop entry, icon, CLI and narrow wired-F75 udev rule. Reconnect the keyboard after installation. **Node/npm, Rust, Wine and REA are not runtime requirements.**
 
@@ -73,7 +83,7 @@ These binaries are built against **Debian 12 / glibc 2.36**. They do not cover e
 
 ### Build from source
 
-Use Rust 1.93.1 (the release-tested compiler) or a compatible newer version, Node 24/npm, Python 3.11+ and native libraries. Distribution-specific prerequisites are in the [guide](docs/INSTALLATION.md).
+Use Rust 1.93.1 (the release-tested compiler) or a compatible newer version, Node 24/npm, Python 3.11+ and native libraries. Platform-specific prerequisites are in the [guide](docs/INSTALLATION.md): Linux GTK/WebKitGTK, Windows C++ Build Tools/WebView2, or macOS Xcode.
 
 ```sh
 git clone https://github.com/Dahuum/aula-studio.git
@@ -84,7 +94,7 @@ cargo build --locked --release -p aula-studio -p aula-cli
 ./target/release/aula-studio
 ```
 
-The frontend is embedded; no development web server is needed. Version 0.4.2 fixed TTY launch when a unique trusted user-owned Wayland display is available. Neither release changes your shell or compositor settings.
+On Windows, launch `./target/release/aula-studio.exe`. On macOS use the same launch path as Linux. The frontend is embedded; no development web server is needed. Version 0.4.2 fixed TTY launch when a unique trusted user-owned Wayland display is available. Neither release changes your shell or compositor settings.
 
 ## Try it without a keyboard
 

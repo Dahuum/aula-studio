@@ -22,6 +22,7 @@ parser.add_argument('--binary', type=Path, help='Validate this packaged native e
 parser.add_argument('--xdg', action='store_true', help='Exercise standard XDG config/data paths under the isolated test directory')
 parser.add_argument('--dev', action='store_true', help='Use the locally built debug binary with the loopback Vite development server')
 parser.add_argument('--fallback', action='store_true', help='Disable private original artwork for standalone rendering validation')
+parser.add_argument('--no-screenshots', action='store_true', help='Skip image capture when the container WebKit snapshot endpoint hangs; retain every workflow assertion')
 options = parser.parse_args()
 BINARY = options.binary.resolve() if options.binary else ROOT / ('target/debug/aula-studio' if options.dev else 'target/release/aula-studio')
 inputs = list((ROOT / 'crates').rglob('*.rs')) + list((ROOT / 'app/src-tauri').rglob('*.rs')) + ([] if options.dev else list((ROOT / 'app/dist').rglob('*')))
@@ -122,6 +123,8 @@ def arrow(label, key):
 
 
 def screenshot(name):
+    if options.no_screenshots:
+        return
     request('POST', f'/session/{sid}/execute/async', {
         'script': 'const done=arguments[arguments.length-1];requestAnimationFrame(()=>requestAnimationFrame(()=>done(true)));', 'args': []})
     (OUT / name).write_bytes(base64.b64decode(request('GET', f'/session/{sid}/screenshot')))
@@ -226,8 +229,15 @@ try:
             click('Color selected keys locally')
             assert not execute('return [...document.querySelectorAll("button")].some(b=>b.textContent.trim()==="Read device (experimental)")')
         text_input('//input[@aria-label="Model profile name"]',model['name']+' native QA')
+        wait(lambda: execute('return document.querySelector(arguments[0]).value', ['input[aria-label="Model profile name"]']) == model['name']+' native QA')
         click('Save local profile')
-        wait(lambda: any(p['name']==model['name']+' native QA' for p in ok('list_model_profiles')))
+        try:
+            wait(lambda: any(p['name']==model['name']+' native QA' for p in ok('list_model_profiles')))
+        except AssertionError:
+            print(json.dumps({'failed_model': model['id'], 'expected_name': model['name']+' native QA',
+                              'saved_profiles': ok('list_model_profiles'),
+                              'visible_state': execute('return document.body.innerText').strip()[-9000:]}, ensure_ascii=True), flush=True)
+            raise
         assert execute('return !document.body.innerText.includes("Unapplied local edits")')
         if model['id'] in ['f108', 'h108']:
             profile = next(p for p in ok('list_model_profiles') if p['model_id'] == model['id'])
@@ -302,7 +312,7 @@ try:
         assert path.stat().st_mode&0o777==0o600
     click('Lighting');screenshot('s75-lighting.png')
     click('← F75 controls');wait(lambda: execute('return !!document.querySelector(".original-app")'))
-    result={'status':'passed','binary_sha256':hashlib.sha256(BINARY.read_bytes()).hexdigest(),'physical_writes':False,
+    result={'status':'passed','binary_sha256':hashlib.sha256(BINARY.read_bytes()).hexdigest(),'physical_writes':False,'screenshots_captured':not options.no_screenshots,
             'models':checked,'checks':['all recovered layouts in native WebKit','research-only entries have no controls',
             'native model profile save and clean state','F87 actual Rust synthetic read/384B transfer/126-plane projection','F108/H108 actual Rust 378B capture projection and config signatures','demo physical-read gate before IO','raw capture download/schema isolation','per-key and Fn draft serialization','focused native macro recording',
             'F98 native effect controls/per-key persistence and non-destructive legacy migration through visible save/history',

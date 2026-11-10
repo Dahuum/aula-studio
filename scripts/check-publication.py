@@ -51,7 +51,7 @@ def main():
             assert target.is_relative_to(site) and target.is_file(), link
     # Self-hosted fonts must ship with the exact upstream bytes and OFL texts.
     font_sources = json.loads((site / 'assets/fonts/sources.json').read_text())
-    assert len(font_sources) == 4
+    assert len(font_sources) >= 4 and len({f["file"] for f in font_sources}) == len(font_sources)
     for font in font_sources:
         target = site / 'assets/fonts' / font['file']
         assert target.parent == site / 'assets/fonts'
@@ -64,6 +64,10 @@ def main():
             assert b'SIL OPEN FONT LICENSE' in data.upper(), font['file']
     for asset in re.findall(r'url\("([^"\)]+)"\)', (site / 'style.css').read_text()):
         assert asset.startswith('assets/fonts/') and (site / asset).is_file(), asset
+    for vendor in json.loads((site / 'assets/vendor/sources.json').read_text()):
+        asset=site / 'assets/vendor' / vendor['file']
+        assert asset.parent==site/'assets/vendor'
+        assert hashlib.sha256(asset.read_bytes()).hexdigest()==vendor['sha256']
     source = json.loads((ROOT / 'dist/publication/manifest.json').read_text())
     root = Path(source['source_archive']).parent / f"aula-studio-{source['version']}"
     broken = []

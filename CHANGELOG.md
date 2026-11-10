@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.6.0 — unreleased development
+## 0.6.0 — native desktop preview
+
+- Add native Windows x86_64 and macOS Apple Silicon/Intel backends and installers; preserve exact-device, descriptor, connection-epoch and reviewed-write safeguards. Windows/Mac physical USB operations remain unverified. Packages are unsigned; macOS is not notarized.
+- Use native OS storage/randomness, non-exclusive macOS HID, bounded Windows PnP attachment metadata and platform-aware locking/file flushing. Add native-window and actual installer lifecycle checks.
+- Redesign the landing page with self-hosted Space Grotesk typography, Motion animations, an independent interactive keyboard illustration, OS download panels, responsive controls and reduced-motion support.
+- Produce fresh Debian12-baseline Linux packages, distribution install/launch/uninstall checks and Arch packaging; packaged app runtime does not require npm, Rust, REA or Wine.
+- Correct stale About version and Linux-only wording in the shared application interface.
 
 - Add the five native normal mouse-button assignments in both F75 layers with exact record fixtures, profile/readback support and existing reviewed transaction safeguards; preserve repeat/unknown records raw. No host input injection or automatic hardware write.
 

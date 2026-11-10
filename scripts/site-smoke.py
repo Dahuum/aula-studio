@@ -98,25 +98,40 @@ try:
     request('POST',f'/session/{sid}/window/rect',{'width':1366,'height':1000})
     request('POST',f'/session/{sid}/url',{'url':'https://dahuum.github.io/aula-studio/' if options.live else f'http://127.0.0.1:{server.server_port}/'})
     wait(lambda: execute('return document.querySelector("h1")?.textContent.includes("AULA Studio")'))
-    wait(lambda: execute('return [...document.images].filter(i=>i.hasAttribute("src")&&i.getClientRects().length>0).every(i=>i.complete&&i.naturalWidth>0)'))
+    wait(lambda: execute('return [...document.images].filter(i=>i.hasAttribute("src")&&i.getClientRects().length>0&&i.getBoundingClientRect().top<innerHeight&&i.getBoundingClientRect().bottom>0).every(i=>i.complete&&i.naturalWidth>0)'))
     request('POST', f'/session/{sid}/execute/async', {'script':'const done=arguments[arguments.length-1];document.fonts.ready.then(()=>done(true));', 'args':[]})
-    assert execute("""return document.fonts.check('520 20px "Instrument Sans"') && document.fonts.check('400 12px "IBM Plex Mono"')""")
+    assert execute("""return document.fonts.check('500 20px "Space Grotesk"') && document.fonts.check('400 14px "Instrument Sans"') && document.fonts.check('400 12px "IBM Plex Mono"')""")
     assert execute('return [...document.fonts].filter(f=>f.status==="loaded").length>=2')
     actual_reduced = execute('return matchMedia("(prefers-reduced-motion: reduce)").matches')
     assert actual_reduced == options.reduced_motion, ('Actual browser motion preference differs', actual_reduced)
-    if options.reduced_motion:
-        assert execute('return getComputedStyle(document.querySelector("h1")).animationName==="none" && !document.documentElement.classList.contains("motion-enabled")')
-    else:
-        assert execute('return getComputedStyle(document.querySelector("h1")).animationName==="arrive" && document.documentElement.classList.contains("motion-enabled")')
+    assert execute('return typeof window.Motion?.animate === "function" && typeof window.Motion?.inView === "function"')
+    assert execute('return getComputedStyle(document.querySelector("h1")).fontFamily.includes("Space Grotesk")')
+    assert execute('return document.querySelectorAll(".keycap:not(.keyspace):not(.key-knob)").length') == 80
+    assert execute('return document.documentElement.classList.contains("motion-enabled")') == (not options.reduced_motion)
+    click('//button[@data-effect="solid"]')
+    click('//button[@data-palette="citrus"]')
+    assert execute('return document.getElementById("keyboard-object").dataset.effect') == 'solid'
+    assert execute('return document.querySelector(".keycap").style.getPropertyValue("--key-hue")') == '82'
+    click('//button[@data-effect="ripple"]')
+    assert execute('return document.getElementById("keyboard-object").dataset.effect') == 'ripple'
+    for os_name in ['windows', 'macos', 'linux']:
+        click('//*[@id="os-'+os_name+'"]')
+        assert execute('return !document.getElementById(arguments[0]).hidden', ['downloads-'+os_name])
+        assert execute('return document.getElementById(arguments[0]).getAttribute("aria-selected")', ['os-'+os_name]) == 'true'
+    os_tab=element('//*[@id="os-linux"]')
+    request('POST',f'/session/{sid}/element/{os_tab}/value',{'text':'\ue012','value':['\ue012']})
+    wait(lambda: execute('return !document.getElementById("downloads-macos").hidden'))
+    assert execute('return [...document.querySelectorAll("#downloads-macos a.download-link")].filter(a=>a.href.endsWith(".dmg")).length') == 2
+    click('//*[@id="os-linux"]')
     reveal = request('POST', f'/session/{sid}/execute/async', {'script':'''
-      const done=arguments[arguments.length-1], target=document.querySelector(".download-row");
+      const done=arguments[arguments.length-1], target=document.querySelector(".platform-panel:not([hidden]) .download-row");
       target.scrollIntoView({block:"center",behavior:"instant"});
       if(matchMedia("(prefers-reduced-motion: reduce)").matches) {
         requestAnimationFrame(()=>requestAnimationFrame(()=>done(target.getAnimations().length===0)));
       } else {
         const deadline=performance.now()+2500;
         function check() {
-          if(target.getAnimations().some(a=>a.effect.getKeyframes().some(k=>k.opacity==="0"))) return done(true);
+          if(target.getAnimations().some(a=>a.effect.getKeyframes().some(k=>Number(k.opacity)===0))) return done(true);
           if(performance.now()>deadline) return done(false);
           requestAnimationFrame(check);
         }
@@ -128,6 +143,7 @@ try:
     assert execute('return document.documentElement.scrollWidth<=innerWidth+1')
     click('//*[@id="tab-macros"]')
     wait(lambda: execute('return !document.getElementById("panel-macros").hidden'))
+    wait(lambda: execute('const i=document.querySelector("#panel-macros img");return i.complete&&i.naturalWidth>0'))
     tab=element('//*[@id="tab-macros"]')
     request('POST',f'/session/{sid}/element/{tab}/value',{'text':'\ue012','value':['\ue012']})
     wait(lambda: execute('return document.getElementById("tab-lighting").getAttribute("aria-selected")==="true"'))
@@ -136,6 +152,7 @@ try:
     click('//details[contains(@class,"source-install")]/summary')
     click('//button[@aria-label="Copy build commands"]')
     wait(lambda: execute('return !!document.getElementById("copy-status").textContent'))
+    wait(lambda: execute('const i=document.querySelector("#panel-lighting img");return i.complete&&i.naturalWidth>0'))
     click('//button[@aria-label="Enlarge the native lighting editor screenshot"]')
     assert execute('return document.getElementById("image-dialog").open')
     click('//*[@id="close-image"]')
@@ -146,11 +163,11 @@ try:
     assert execute('return document.documentElement.scrollWidth<=innerWidth+1'), 'Mobile horizontal overflow'
     assert execute('return getComputedStyle(document.querySelector(".header nav")).display==="none"')
     screenshot('mobile.png')
-    href=execute('return document.querySelector(".source-install>a").href')
+    href=execute('return document.querySelector(".source-install>div>a").href')
     with urllib.request.urlopen(urllib.request.Request(href,method='HEAD'),timeout=10) as response:
         assert response.status==200 and int(response.headers['Content-Length'])>1000
     result={'status':'passed','browser':'actual WebKit MiniBrowser','checks':['desktop and mobile layout','screenshots loaded',
-            'local fonts actually loaded','real reduced-motion preference' if options.reduced_motion else 'entrance and scroll animations', 'active section navigation','pointer and keyboard tabs','FAQ','copy or selection fallback','image modal open/close','real download HTTP 200'],
+            'local fonts actually loaded','real reduced-motion preference' if options.reduced_motion else 'real Motion framework entrance/reveal/preview interactions', 'active section navigation','Windows/macOS/Linux download tabs and screenshot keyboard navigation','FAQ','copy or selection fallback','image modal open/close','real download HTTP 200'],
             'network_publication':False,'target':'live' if options.live else 'local','reduced_motion':options.reduced_motion,'evidence':str(OUT)}
     (OUT/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result,indent=2))
 except Exception:
