@@ -132,7 +132,7 @@ def native_notices(target="x86_64-unknown-linux-gnu"):
         queue.extend(d['pkg'] for d in nodes.get(current, {}).get('deps', []))
     retained = json.loads((ROOT / 'third_party/licenses/index.json').read_text())
     chunks = ['AULA Studio third-party notices\n\nOriginal project code: MIT (see LICENSE).\n'
-              'This inventory conservatively includes resolved Linux build dependencies. '
+              f'This inventory conservatively includes resolved native build dependencies for {target}. '
               'Upstream packages are unmodified; source is available at the versioned crates.io URLs below.\n'
               'System GTK/WebKitGTK libraries are not bundled and retain their own licenses.\n']
     missing = []
@@ -140,7 +140,7 @@ def native_notices(target="x86_64-unknown-linux-gnu"):
     for p in sorted((packages[i] for i in reached if packages[i].get('source')), key=lambda p: (p['name'], p['version'])):
         count += 1
         directory = Path(p['manifest_path']).parent
-        chunks.append(f"\n{'='*72}\n{p['name']} {p['version']}\nLicense: {p.get('license') or 'see upstream files'}\nSource: https://crates.io/crates/{p['name']}/{p['version']}\n")
+        chunks.append(f"\n{'='*72}\n{p['name']} {p['version']}\nLicense: {p.get('license') or 'see upstream files'}\nAuthors (upstream metadata): {', '.join(p.get('authors', [])) or 'see upstream files'}\nSource: https://crates.io/crates/{p['name']}/{p['version']}\n")
         files = {f for f in directory.iterdir() if f.is_file() and f.name.lower().startswith(('license', 'licence', 'copying', 'notice', 'copyright'))}
         if p.get('license_file'):
             candidate = directory / p['license_file']

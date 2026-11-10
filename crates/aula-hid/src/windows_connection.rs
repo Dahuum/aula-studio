@@ -30,9 +30,8 @@ pub(super) fn identity(path: &str) -> Option<String> {
     };
     if result != CR_SUCCESS
         || kind != DEVPROP_TYPE_STRING
-        || bytes < 2
-        || bytes > 1024
-        || bytes % 2 != 0
+        || !(2..=1024).contains(&bytes)
+        || bytes & 1 != 0
     {
         return None;
     }
