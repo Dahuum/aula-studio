@@ -24,6 +24,8 @@ jobs:
           PUBLIC_OWNER: ${{ github.repository_owner }}
         run: python3 scripts/build-site.py --repository-url "https://github.com/${PUBLIC_REPOSITORY}" --site-url "https://${PUBLIC_OWNER}.github.io/${PUBLIC_REPOSITORY#*/}"
       - run: python3 scripts/check-publication.py
+      - name: Verify every advertised release download before deployment
+        run: python3 scripts/check-download-links.py
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: site/dist
