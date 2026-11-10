@@ -14,6 +14,6 @@ pkgbase = aula-studio-bin
 	options = !debug
 	options = !strip
 	source = https://github.com/Dahuum/aula-studio/releases/download/v0.6.0/aula-studio-0.6.0-linux-x86_64.tar.gz
-	sha256sums = 01c56ccb7365e595f3c0e7250382fab69d63c4a0ef26bd96d256b179e28ca78e
+	sha256sums = 57bf9934715bb2cb355947e26c863120bd905aaa4a304da93a89e68df2f6048c
 
 pkgname = aula-studio-bin

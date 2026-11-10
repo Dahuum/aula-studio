@@ -9,7 +9,7 @@ license=('MIT')
 url='https://github.com/Dahuum/aula-studio'
 depends=('webkit2gtk-4.1' 'gtk3' 'libudev.so' 'libayatana-appindicator')
 source=("aula-studio-${pkgver}-linux-x86_64.tar.gz")
-sha256sums=('01c56ccb7365e595f3c0e7250382fab69d63c4a0ef26bd96d256b179e28ca78e')
+sha256sums=('57bf9934715bb2cb355947e26c863120bd905aaa4a304da93a89e68df2f6048c')
 package() {
  local stage="$srcdir/aula-studio-${pkgver}-linux-x86_64"
  install -Dm755 "$stage/bin/aula-studio" "$pkgdir/usr/bin/aula-studio"
